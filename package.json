@@ -1,0 +1,25 @@
+{
+  "name": "super-mb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test/all.test.js",
+    "build": "node scripts/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/verdictzero/super-mb.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/verdictzero/super-mb/issues"
+  },
+  "homepage": "https://github.com/verdictzero/super-mb#readme",
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "type": "module"
+}
