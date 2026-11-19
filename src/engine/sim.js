@@ -11,7 +11,7 @@ export const PHYS = {
   slope: 0.125 * S, slopeFloor: 0.0875 * S, // slope pull (gentler while on floor-ish angles so 45s are walkable)
   slip: 2.5 * S,      // below this speed you fall off walls and ceilings
   boost: 10 * S, spring: 9 * S,
-  r: 7 * S, sens: 5 * S,  // body radius, sensor spread
+  r: 14 * S, sens: 10 * S,  // body radius (the ball is a bit under two tiles across), sensor spread
 };
 const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // sensor direction for floor / right wall / ceiling / left wall
 const RAD = Math.PI / 180;
@@ -220,7 +220,7 @@ export class Sim {
       if (o.type === 'flyer') o.y = o.y0 + Math.round(Math.sin((this.frame + o.x) / 22) * 0.9 * TILE);
       if (o.type === 'vent') { // steam vent: a spring that only fires part of the time
         o.on = (this.frame + o.phase) % VENT_CYCLE < VENT_ON;
-        if (o.on && Math.abs(p.x - (o.x + H)) < 13 * S && p.y > o.y - 3 * TILE && p.y < o.y + TILE) { p.ysp = -9.5 * S; p.xsp = (p.grounded ? p.gsp : p.xsp) * 0.2; p.grounded = false; p.jumping = false; p.ang = 0; }
+        if (o.on && Math.abs(p.x - (o.x + H)) < P.r + 6 * S && p.y > o.y - 3 * TILE && p.y < o.y + TILE) { p.ysp = -9.5 * S; p.xsp = (p.grounded ? p.gsp : p.xsp) * 0.2; p.grounded = false; p.jumping = false; p.ang = 0; }
         continue;
       }
       if (o.type === 'crusher') { // press: slams down from the ceiling but stops short of the floor, so it only gets you if you jump
@@ -228,20 +228,20 @@ export class Sim {
         if (p.x + P.r > o.x && p.x - P.r < o.x + 2 * TILE && p.y - P.r < o.y + o.ext && p.y + P.r > o.y) this._die('crushed');
         continue;
       }
-      if (o.type === 'checkpoint') { if (!o.on && Math.abs(p.x - (o.x + H)) < 13 * S && Math.abs(p.y - o.y) < 2 * TILE) { o.on = true; this.check = { x: o.x + H, y: o.y + TILE - PHYS.r - 1 }; this.events.push({ type: 'check', x: o.x + H, y: o.y }); } continue; }
+      if (o.type === 'checkpoint') { if (!o.on && Math.abs(p.x - (o.x + H)) < P.r + 6 * S && Math.abs(p.y - o.y) < 2 * TILE) { o.on = true; this.check = { x: o.x + H, y: o.y + TILE - PHYS.r - 1 }; this.events.push({ type: 'check', x: o.x + H, y: o.y }); } continue; }
       if (o.type === 'walker') {
         const f = o.vx < 0 ? -1 : 1;
         if (this.solid(Math.floor(o.x + H + f * 9 * S), o.y + H, 'A') || !this.solid(Math.floor(o.x + H + f * H), o.y + TILE + 1, 'A', true)) o.vx = -o.vx; else o.x += o.vx;
       }
       const dx = p.x - (o.x + H), dy = p.y - (o.y + H);
-      if (o.type === 'goal' || Math.abs(dx) > 13 * S || Math.abs(dy) > 13 * S) continue;
+      if (o.type === 'goal' || Math.abs(dx) > P.r + 6 * S || Math.abs(dy) > P.r + 6 * S) continue;
       if (o.type === 'gem') { o.alive = false; p.gems++; this.events.push({ type: 'gem', x: o.x + H, y: o.y + H }); }
       else if (o.type === 'spring' && dy < 2 * S) { p.ysp = -(o.power ? o.power * S : P.spring); p.xsp = (p.grounded ? p.gsp : p.xsp) * 0.2; this.events.push({ type: 'boost', x: p.x, y: p.y }); // springs send you up, not along
         p.grounded = false; p.jumping = false; p.ang = 0; p.y -= 2 * S; }
       else if (o.type === 'booster' && p.grounded) { if (p.gsp * o.dir < P.boost) { p.gsp = o.dir * P.boost; this.events.push({ type: 'boost', x: p.x, y: p.y }); } }
       else if (o.type === 'walker' || o.type === 'flyer') {
-        if (!p.grounded && p.ysp > 0 && dy < -3 * S) { o.alive = false; this.events.push({ type: 'bop', x: o.x + H, y: o.y + H }); p.ysp = input.jump ? -P.jump : -3.5 * S; }
-        else if (Math.abs(dx) < 11 * S && Math.abs(dy) < 11 * S) this._die('enemy');
+        if (!p.grounded && p.ysp > 0 && dy < -P.r * 0.5) { o.alive = false; this.events.push({ type: 'bop', x: o.x + H, y: o.y + H }); p.ysp = input.jump ? -P.jump : -3.5 * S; }
+        else if (Math.abs(dx) < P.r + 4 * S && Math.abs(dy) < P.r + 4 * S) this._die('enemy');
       }
     }
   }

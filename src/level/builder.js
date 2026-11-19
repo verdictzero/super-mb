@@ -89,8 +89,8 @@ export class LevelBuilder {
   belt(n, dir = 1) { const id = this.ts.names[dir > 0 ? 'belt_r_0' : 'belt_l_0']; for (let i = 0; i < n; i++) { this.set(this.x, this.g, id); this._fill(this.x, this.g + 1, this.depth - 1); this.surf[this.x] = null; this.x++; } return this; }
   acid(n) { for (let i = 0; i < n; i++) { this.set(this.x, this.g, this.ts.names.acid_0); this._fill(this.x, this.g + 1, this.depth - 1); this.surf[this.x] = null; this.x++; } return this; }
   vent(dx = 0, phase = 0) { return this.obj('vent', dx, 1, { phase }); }
-  // hangs from a ceiling `clearance` tiles above the ground and reaches down to just over a tile above the floor
-  crusher(dx = 0, clearance = 4, phase = 0) { this.objects.push({ type: 'crusher', x: (this.x + dx) * T, y: (this.g - clearance) * T, w: 2 * T, h: T, reach: Math.round((clearance - 1.3) * T), phase }); return this; }
+  // hangs from a ceiling `clearance` tiles above the ground and stops about two tiles above the floor, clear of a rolling player
+  crusher(dx = 0, clearance = 4, phase = 0) { this.objects.push({ type: 'crusher', x: (this.x + dx) * T, y: (this.g - clearance) * T, w: 2 * T, h: T, reach: Math.round((clearance - 2.1) * T), phase }); return this; }
   deco(name, dx = 0, up = 1) { this._col(this.x + dx); if (this.g - up >= 0) this.dec[this.x + dx][this.g - up] = this.ts.names[name]; return this; }
   // power: launch speed in 16px-grid units per frame; omit for the standard spring (about 11 tiles of height)
   spring(dx = 0, power) { return this.obj('spring', dx, 1, power ? { power } : {}); }
@@ -200,6 +200,6 @@ export class LevelBuilder {
       }
       terrain[y * w + x] = id; decor[y * w + x] = this.dec[x][y];
     }
-    return { name: this.name, theme: this.theme, groundRow: this.g0, width: w, height: h, tile: T, terrain, decor, objects: this.objects, props: this.props, spawn: { x: 3.5 * T, y: this.g0 * T - T / 2 } };
+    return { name: this.name, theme: this.theme, groundRow: this.g0, width: w, height: h, tile: T, terrain, decor, objects: this.objects, props: this.props, spawn: { x: 3.5 * T, y: this.g0 * T - T } };
   }
 }

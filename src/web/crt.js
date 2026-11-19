@@ -2,8 +2,9 @@
 import { VERT, SIGNAL_FRAG, PHOSPHOR_FRAG, BLUR_FRAG, TUBE_FRAG } from '../shader/crt.js';
 
 export class CRT {
-  constructor(out, src) {
-    this.out = out; this.src = src; this.frame = 0; this.degauss = 0; this.flip = 0;
+  // logical: the picture's size in art pixels, when the source canvas is a scaled-up render of it
+  constructor(out, src, logical = [src.width, src.height]) {
+    this.out = out; this.src = src; this.logical = logical; this.frame = 0; this.degauss = 0; this.flip = 0;
     const gl = (this.gl = out.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: true }));
     if (!gl) throw new Error('WebGL unavailable');
     const prog = (frag) => {
@@ -56,7 +57,7 @@ export class CRT {
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.srcTex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
-    const res = [src.width, src.height], prev = this.glow[this.flip], next = this.glow[(this.flip ^= 1)];
+    const res = this.logical, prev = this.glow[this.flip], next = this.glow[(this.flip ^= 1)];
     this._pass(this.P.signal, this.signal, { u_src: this.srcTex }, { u_res: res, u_frame: this.frame, u_rf: o.rf, u_composite: o.composite });
     this._pass(this.P.phosphor, next, { u_cur: this.signal.tex, u_prev: prev.tex }, { u_persist: o.persist });
     this._pass(this.P.blur, this.blur[0], { u_tex: next.tex }, { u_step: [2.2 / this.blur[0].w, 0] });

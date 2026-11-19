@@ -5,11 +5,12 @@ import { buildBackground, layoutBackground, HORIZON_ABOVE_GROUND } from '../tile
 import { EXAMPLES } from '../level/examples.js';
 import { generateLevel } from '../level/generator.js';
 import { renderLevel, objectTile } from '../level/render.js';
-import { Sim } from '../engine/sim.js';
+import { Sim, PHYS } from '../engine/sim.js';
 import { Bot } from '../engine/bot.js';
 import { TILE as T } from '../core/units.js';
 import { buildProps } from '../tileset/props.js';
 import { CRT } from './crt.js';
+import { HEAD } from './head.js';
 
 const $ = (id) => document.getElementById(id);
 const ts = buildTileset();
@@ -61,8 +62,11 @@ const overlay = (() => {
 
 const state = { level: null, sim: null, bot: new Bot(), useBot: true, showCol: false, sheetTheme: 'meadow', cam: { x: 0, y: 0 }, wait: 0, idle: 0, keys: {} };
 const game = $('game'), g = game.getContext('2d');
-game.width = VW; game.height = VH;
-g.imageSmoothingEnabled = false;
+// The canvas is K times the logical view: pixel art is scaled up crisply, while the player's
+// photo and sphere are drawn smooth at the full resolution.
+const K = 3;
+game.width = VW * K; game.height = VH * K;
+const headImg = new Image(); headImg.src = HEAD;
 
 function load(level) {
   state.level = level; state.sim = new Sim(ts, level); state.bot = new Bot(); state.wait = 0; parts.length = 0; trail.length = 0;
@@ -74,12 +78,34 @@ function load(level) {
   mini.getContext('2d').putImageData(new ImageData(im.rgba, im.w, im.h), 0, 0);
 }
 
+// ---- squash and stretch ------------------------------------------------------------
+// One springy value drives the morph: positive stretches the player along an axis, negative
+// squashes it. Airborne speed sets the target, and landings, jumps and boosts kick it.
+const morph = { v: 0, vel: 0, axis: 0, lean: 0, float: 0, wasJumping: false, wasGrounded: true };
+function updateMorph(sim) {
+  const p = sim.p, sp = Math.hypot(p.xsp, p.ysp) / T;
+  for (const e of sim.events) { if (e.type === 'land') morph.vel -= 0.16; else if (e.type === 'boost') morph.vel += 0.12; else if (e.type === 'bop') morph.vel -= 0.1; }
+  if (p.jumping && !morph.wasJumping) morph.vel += 0.11;                        // jump: spring upward
+  if (!p.grounded && morph.wasGrounded && !p.jumping) morph.vel += 0.04;        // rolled off an edge
+  morph.wasJumping = p.jumping; morph.wasGrounded = p.grounded;
+  const target = p.grounded ? Math.min(0.07, (Math.abs(p.gsp) / T) * 0.12) : Math.min(0.2, sp * 0.3);
+  morph.vel += (target - morph.v) * 0.22; morph.vel *= 0.7; morph.v = Math.max(-0.32, Math.min(0.3, morph.v + morph.vel));
+  // stretch along the direction of travel in the air; along the surface when rolling; squash into the surface on impact
+  const rad = (p.ang * Math.PI) / 180, want = p.grounded ? (morph.v < 0 ? -rad - Math.PI / 2 : -rad) : Math.atan2(p.ysp, p.xsp);
+  let d = want - morph.axis; d = Math.atan2(Math.sin(2 * d), Math.cos(2 * d)) / 2; // an axis has no direction: turn the short way
+  morph.axis += d * (p.grounded ? 0.5 : 0.3);
+  const speed = (p.grounded ? p.gsp : p.xsp) / T;
+  morph.lean += (Math.max(-0.2, Math.min(0.2, speed * 0.55)) - morph.lean) * 0.2;          // head leans into the run
+  morph.float += ((p.grounded ? 0 : Math.max(-0.18, Math.min(0.18, -p.ysp / T * 0.5))) - morph.float) * 0.25; // and lags behind when falling or rising
+}
+
 // ---- particles: small visual effects driven by sim events ------------------------
 const parts = [], trail = [];
 function burst(x, y, n, color, speed, opt = {}) {
   for (let i = 0; i < n; i++) { const a = opt.up ? -Math.PI * (0.15 + 0.7 * Math.random()) : Math.random() * 2 * Math.PI, v = speed * (0.4 + Math.random() * 0.6); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: opt.g ?? 0, life: opt.life ?? 24, max: opt.life ?? 24, size: opt.size ?? T / 8, color }); }
 }
 function effects(sim, level) {
+  updateMorph(sim);
   const c = THEMES[level.theme].colors, u = T / 16;
   for (const e of sim.events) {
     if (e.type === 'gem') burst(e.x, e.y, 6, c.gemL, 2.2 * u, { life: 18 });
@@ -97,12 +123,49 @@ function effects(sim, level) {
   if (trail.length > 8) trail.shift();
 }
 
+// The player: a head riding upright inside a clear rolling sphere (the sphere turns, the head does not).
+function drawPlayer(p, cx, cy) {
+  const R = PHYS.r * 1.12, rad = (p.ang * Math.PI) / 180, lift = R - PHYS.r; // sphere is a little bigger than the hitbox: lift it so it rests on the surface
+  const ball = (x, y, alpha) => { g.globalAlpha = alpha; g.beginPath(); g.arc(x, y, R, 0, 2 * Math.PI); g.fillStyle = 'rgba(190,230,255,0.5)'; g.fill(); g.globalAlpha = 1; };
+  trail.forEach((q, i) => { if (q.fast && i % 3 === 0 && i <= 5) ball(q.x - cx, q.y - cy - lift, 0.1 + i * 0.04); }); // speed afterimages
+  g.save();
+  g.translate(Math.round((p.x - cx - Math.sin(rad) * lift) * K) / K, Math.round((p.y - cy - Math.cos(rad) * lift) * K) / K);
+  // squash/stretch about the morph axis, keeping volume, and keep the squashed side on the ground
+  const sv = morph.v, along = 1 + sv, across = 1 / Math.sqrt(Math.max(0.5, along));
+  if (p.grounded && sv < 0) g.translate(Math.sin(rad) * R * -sv * 0.9, Math.cos(rad) * R * -sv * 0.9);
+  g.rotate(morph.axis); g.scale(along, across); g.rotate(-morph.axis);
+  const glass = g.createRadialGradient(-R * 0.35, -R * 0.4, R * 0.05, 0, 0, R);
+  glass.addColorStop(0, 'rgba(255,255,255,0.42)'); glass.addColorStop(0.45, 'rgba(190,230,255,0.10)'); glass.addColorStop(1, 'rgba(110,180,255,0.32)');
+  g.beginPath(); g.arc(0, 0, R, 0, 2 * Math.PI); g.fillStyle = glass; g.fill();
+  g.save(); // head: upright to the surface, facing the way you move, with a little bob at speed
+  if (p.grounded) g.rotate(-rad);
+  if (p.face < 0) g.scale(-1, 1);
+  const hr = R * 0.8, bob = Math.sin(p.spin * 2) * Math.min(1, Math.abs(p.gsp) / T) * 0.8 + morph.float * R;
+  g.transform(1, 0, -morph.lean * p.face, 1, 0, 0);                              // shear: chin stays, crown leans
+  g.scale(1 + Math.abs(morph.float) * 0.25 - sv * 0.15, 1 - Math.abs(morph.float) * 0.25 + sv * 0.15); // the head morphs a little on its own
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  if (headImg.complete && headImg.naturalWidth) g.drawImage(headImg, -hr, -hr + bob, hr * 2, hr * 2);
+  g.imageSmoothingEnabled = false;
+  g.restore();
+  g.save(); // shell details turn with the roll
+  g.rotate(p.spin);
+  g.strokeStyle = 'rgba(255,255,255,0.34)'; g.lineWidth = 1;
+  for (const tilt of [0, Math.PI / 2]) { g.beginPath(); g.ellipse(0, 0, R * 0.97, R * 0.3, tilt, 0, 2 * Math.PI); g.stroke(); }
+  g.fillStyle = 'rgba(255,255,255,0.7)';
+  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4 + 0.39; g.beginPath(); g.arc(Math.cos(a) * R * 0.84, Math.sin(a) * R * 0.84, 1, 0, 2 * Math.PI); g.fill(); }
+  g.restore();
+  g.beginPath(); g.arc(0, 0, R - 0.4, 0, 2 * Math.PI); g.strokeStyle = 'rgba(30,60,140,0.55)'; g.lineWidth = 1.6; g.stroke();
+  g.beginPath(); g.arc(0, 0, R - 1.3, 0, 2 * Math.PI); g.strokeStyle = 'rgba(255,255,255,0.8)'; g.lineWidth = 0.9; g.stroke();
+  g.beginPath(); g.arc(0, 0, R * 0.8, -2.7, -1.85); g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 2.4; g.lineCap = 'round'; g.stroke(); // glint
+  g.restore();
+}
 let animTick = 0; // advances animated tiles (conveyors, acid)
 function drawTile(sheet, id, x, y) { if (id && ts.tiles[id].frames) id += animTick % ts.tiles[id].frames; if (id) g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, x, y, T, T); }
 
 function draw() {
   const { level, sim, cam } = state, p = sim.p, sheet = atlasFor(level.theme);
   animTick = Math.floor((sim.frame + state.idle) / 5);
+  g.setTransform(K, 0, 0, K, 0, 0); g.imageSmoothingEnabled = false;
   cam.x += (Math.max(0, Math.min(level.width * T - VW, p.x - VW * 0.42)) - cam.x) * 0.2;
   cam.y += (Math.max(0, Math.min(level.height * T - VH, p.y - VH * 0.58)) - cam.y) * 0.22;
   const cx = Math.round(cam.x), cy = Math.round(cam.y);
@@ -137,22 +200,7 @@ function draw() {
     }
     if (name) drawTile(sheet, ts.names[name], Math.round(o.x) - cx, o.y - cy + (o.type === 'gem' ? Math.round((T / 16) * Math.sin(sim.frame / 12 + o.x / T)) : 0));
   }
-  if (!p.dead) {
-    const rolling = !p.grounded || Math.abs(p.gsp) > 0.28 * T;
-    const id = ts.names[rolling ? 'hero_roll' : 'hero'];
-    const roll = ts.names.hero_roll;
-    trail.forEach((q, i) => { // speed afterimages
-      if (!q.fast || i % 3 || i > 5) return;
-      g.globalAlpha = 0.12 + i * 0.05;
-      g.drawImage(sheet, ((roll - 1) % ts.columns) * T, Math.floor((roll - 1) / ts.columns) * T, T, T, Math.round(q.x) - cx - T / 2, Math.round(q.y) - cy - T / 2, T, T);
-    });
-    g.globalAlpha = 1;
-    g.save();
-    g.translate(Math.round(p.x) - cx, Math.round(p.y) - cy);
-    if (rolling) g.rotate(p.spin); else { g.rotate((-p.ang * Math.PI) / 180); if (p.face < 0) g.scale(-1, 1); }
-    g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, -T / 2, -T / 2, T, T);
-    g.restore();
-  }
+  if (!p.dead) drawPlayer(p, cx, cy);
   for (const q of parts) {
     g.globalAlpha = Math.min(1, (q.life / q.max) * 1.6);
     if (q.gem) drawTile(sheet, ts.names.gem, Math.round(q.x) - cx - T / 2, Math.round(q.y) - cy - T / 2);
@@ -194,7 +242,7 @@ function frame(now) {
 
 // ---- CRT filter -------------------------------------------------------------------
 let crt = null;
-try { crt = new CRT($('crt'), game); } catch (err) { console.warn('CRT filter off:', err.message); }
+try { crt = new CRT($('crt'), game, [VW, VH]); } catch (err) { console.warn('CRT filter off:', err.message); }
 state.crtOn = !!crt;
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const crtSettings = () => ({ curve: +$('crtCurve').value, rf: +$('crtRf').value, composite: +$('crtComp').value, scan: +$('crtScan').value, glow: +$('crtGlow').value, persist: 0.2 + 0.6 * +$('crtGlow').value, mask: 0.85, maskType: +$('crtMask').value, calm });

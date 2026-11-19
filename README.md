@@ -73,6 +73,18 @@ moves slightly faster than the one above, which gives the receding-floor look of
 `backgrounds.json` lists each strip's position in the sheet, its vertical offset from the horizon,
 scroll factor(s) and drift, so another engine can reproduce the effect.
 
+## Player
+
+The player is a photo head riding upright inside a clear rolling sphere, a little under two tiles
+across. `scripts/make-head.py photo.jpg` cuts a head out of a green-screen portrait into
+`assets/hero-head.png` (384px, transparent) and `src/web/head.js`. The demo renders at three times
+the art resolution, so the pixel art stays crisp while the photo is drawn smooth and sharp.
+
+The sphere squashes and stretches: it stretches along the direction of travel in the air, squashes
+into the ground on landing, kicks on jumps, boosts and bounces, and the head leans into the run and
+lags a little when rising or falling. This is drawing only (`updateMorph` in `src/web/main.js`);
+the collision shape stays a circle.
+
 ## Factory zone
 
 The fourth theme (`factory`) is a chemical works: steel-plate ground with hazard-striped edges, a

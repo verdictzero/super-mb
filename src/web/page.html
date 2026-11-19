@@ -20,6 +20,7 @@ h2 { font-size: 24px; }
 header p, section > p { margin: 6px 0 0; color: var(--muted); max-width: 65ch; }
 section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 canvas { image-rendering: pixelated; display: block; }
+#game { image-rendering: auto; }
 [hidden] { display: none !important; }
 .screen { background: var(--screen); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
 #game, #crt { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 4px; touch-action: none; }
@@ -66,7 +67,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
   <section aria-label="Game">
     <div class="screen">
       <canvas id="crt" tabindex="0" aria-label="Game screen, CRT filter"></canvas>
-      <canvas id="game" width="800" height="450" tabindex="0" aria-label="Game screen" hidden></canvas>
+      <canvas id="game" width="2400" height="1350" tabindex="0" aria-label="Game screen" hidden></canvas>
       <div class="hud"><span id="hudName"></span><span>gems <b id="hudGems">0</b></span><span>speed <b id="hudSpeed">0.0</b></span><span>angle <b id="hudAngle">0</b>°</span><span>path <b id="hudPath">A</b></span><span id="hudState"></span></div>
       <div class="mini"><canvas id="mini"></canvas><div id="miniMark"></div></div>
     </div>
