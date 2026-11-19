@@ -74,3 +74,14 @@ test('Tiled export round-trips', () => {
   assert.equal(back.objects.length, L.objects.length);
   assert.ok(playtest(ts, back).ok);
 });
+
+test('checkpoints: touching a lamp moves the respawn point', () => {
+  const b = new LevelBuilder(ts); b.flat(10).checkpoint(0).flat(10).gap(40);
+  const level = b.finish(), sim = new Sim(ts, level);
+  for (let i = 0; i < 600 && !sim.p.dead; i++) sim.step({ right: true });
+  assert.equal(sim.p.why, 'fell');
+  sim.reset(true);
+  assert.ok(sim.p.x > 9 * TILE && sim.objs.find((o) => o.type === 'checkpoint').on);
+  sim.reset();
+  assert.equal(sim.p.x, level.spawn.x);
+});

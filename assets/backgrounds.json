@@ -79,7 +79,7 @@
     "lineScroll": false,
     "once": false,
     "pinTop": false,
-    "fillBelow": "#72301a"
+    "fillBelow": "#1b1630"
    }
   ]
  },
@@ -151,7 +151,7 @@
     "lineScroll": false,
     "once": false,
     "pinTop": false,
-    "fillBelow": "#1a2550"
+    "fillBelow": "#1b1630"
    }
   ]
  },
@@ -247,7 +247,7 @@
     "lineScroll": false,
     "once": false,
     "pinTop": false,
-    "fillBelow": "#38224a"
+    "fillBelow": "#1b1630"
    }
   ]
  }

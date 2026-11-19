@@ -3,7 +3,8 @@
 // be written by hand (see examples.js).
 import { TILE as T, S } from '../core/units.js';
 
-const GROUND = -1; // placeholder, resolved to an autotile in finish()
+const GROUND = -1;
+const FLORA = { meadow: ['flower_0', 'flower_1', 'tuft', 'tuft', 'mushroom', 'rock'], cavern: ['crystal', 'crystal', 'mushroom', 'rock'], dusk: ['tuft', 'rock', 'flower_1', 'tuft'] }; // placeholder, resolved to an autotile in finish()
 
 export class LevelBuilder {
   constructor(ts, { name = 'Untitled', theme = 'meadow', height = 30, ground = 22, ceiling = 0 } = {}) {
@@ -67,10 +68,13 @@ export class LevelBuilder {
   spikes(n = 1, dx = 0) { for (let i = 0; i < n; i++) this.put('spikes', this.x + dx + i, this.g - 1); return this; }
   obj(type, dx = 0, up = 1, extra = {}) { this.objects.push({ type, x: (this.x + dx) * T, y: (this.g - up) * T, w: T, h: T, ...extra }); return this; }
   enemy(dx = 0) { return this.obj('walker', dx, 1); }
+  flyer(dx = 0, up = 3) { return this.obj('flyer', dx, up); }          // hovers, bobbing up and down
+  checkpoint(dx = 0) { return this.obj('checkpoint', dx, 1); }
+  deco(name, dx = 0, up = 1) { this._col(this.x + dx); if (this.g - up >= 0) this.dec[this.x + dx][this.g - up] = this.ts.names[name]; return this; }
   spring(dx = 0) { return this.obj('spring', dx, 1); }
   booster(dx = 0, dir = 1) { return this.obj('booster', dx, 1, { dir }); }
   // speed section lead-in: a booster at each end of an n-tile flat, so it cannot be skipped by one jump
-  runUp(n = 5) { return this.booster(0).flat(n - 1).booster(0).flat(1); }
+  runUp(n = 5) { if (n >= 4) this.deco('sign', 2); return this.booster(0).flat(n - 1).booster(0).flat(1); }
   gems(n, up = 2, dx = 0, arc = 0) {
     for (let i = 0; i < n; i++) this.obj('gem', dx + i, up, arc ? { y: (this.g - up) * T - Math.round(arc * T * Math.sin((Math.PI * (i + 0.5)) / n)) } : {});
     return this;
@@ -102,7 +106,7 @@ export class LevelBuilder {
   // --- finishing -------------------------------------------------------------------
   _stamp(prefix, cw, ch, x, yBottom) { // decor stamp; skipped if anything is in the way
     for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) { const X = x + c, Y = yBottom - ch + 1 + r; if (Y < 0 || X >= this.cols.length || this.cols[X][Y] || this.dec[X][Y]) return false; }
-    for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) this.dec[x + c][yBottom - ch + 1 + r] = this.ts.names[`${prefix}_${c}_${r}`];
+    for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) this.dec[x + c][yBottom - ch + 1 + r] = this.ts.names[cw * ch === 1 ? prefix : `${prefix}_${c}_${r}`];
     return true;
   }
   decorate(rng, density = 1) { // clouds and distant hills come from the parallax background
@@ -111,6 +115,7 @@ export class LevelBuilder {
     const flatRun = (x, n) => { for (let i = 0; i < n; i++) if (this.surf[x + i] == null || this.surf[x + i] !== this.surf[x]) return false; return true; };
     for (let x = 2; x < w - 6; x++) {
       if (rng.chance(0.1 * density) && flatRun(x, 3)) this._stamp('bush', 3, 1, x, this.surf[x] / T - 1);
+      if (rng.chance(0.16 * density) && this.surf[x] != null) this._stamp(rng.pick(FLORA[this.theme] || FLORA.meadow), 1, 1, x, this.surf[x] / T - 1);
     }
     return this;
   }
@@ -134,6 +139,13 @@ export class LevelBuilder {
         let m = 0, bit = 1;
         for (const [dx, dy] of [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]]) { if (isG(x + dx, y + dy)) m |= bit; bit <<= 1; }
         id = ts.ground[m];
+        if (m === 255) { // buried on all sides: three tiles down the soil turns to bedrock, with the odd stone or ore
+          let depth = 0;
+          while (depth < 4 && y - depth - 1 >= 0 && isG(x, y - depth - 1)) depth++;
+          const hash = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+          if (depth === 3) id = ts.names.deep_top;
+          else if (depth > 3) id = ts.names[hash % 23 === 0 ? 'deep_ore' : hash % 17 === 0 ? 'deep_stones' : hash % 41 === 0 ? 'deep_fossil' : 'deep_plain'];
+        }
       }
       terrain[y * w + x] = id; decor[y * w + x] = this.dec[x][y];
     }

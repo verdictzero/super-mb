@@ -23,13 +23,15 @@ export class Sim {
     this.w = level.width; this.h = level.height;
     this.reset();
   }
-  reset() {
+  reset(fromCheckpoint = false) {
+    const check = fromCheckpoint ? this.check : null, lit = fromCheckpoint && this.objs ? this.objs.filter((o) => o.on).map((o) => o.x) : [];
     const L = this.level;
     this.terrain = L.terrain.slice();
     this.loops = L.objects.filter((o) => o.type === 'loop');
-    this.objs = L.objects.filter((o) => o.type !== 'loop').map((o) => ({ ...o, alive: true, vx: -0.4 * S }));
+    this.objs = L.objects.filter((o) => o.type !== 'loop').map((o) => ({ ...o, alive: true, vx: -0.4 * S, y0: o.y, on: lit.includes(o.x) }));
+    this.check = check;
     this.goalX = (L.objects.find((o) => o.type === 'goal') || { x: (this.w - 2) * TILE }).x;
-    this.p = { x: L.spawn.x, y: L.spawn.y, xsp: 0, ysp: 0, gsp: 0, ang: 0, grounded: false, path: 'A', lock: 0, jumping: false, jumpHeld: false, dead: false, won: false, gems: 0, spin: 0, face: 1, hitWall: false };
+    this.p = { x: (check || L.spawn).x, y: (check || L.spawn).y, xsp: 0, ysp: 0, gsp: 0, ang: 0, grounded: false, path: 'A', lock: 0, jumping: false, jumpHeld: false, dead: false, won: false, gems: 0, spin: 0, face: 1, hitWall: false };
     this.frame = 0; this.frozen = false; this.events = [];
   }
   // cheap copy for look-ahead rollouts; never mutates the terrain
@@ -81,6 +83,7 @@ export class Sim {
     const p = this.p;
     if (p.dead || p.won) return;
     this.frame++;
+    if (this.events.length > 64) this.events.length = 0;
     p.hitWall = false;
     if (p.lock > 0) p.lock--;
     const dir = p.lock > 0 ? 0 : (input.right ? 1 : 0) - (input.left ? 1 : 0);
@@ -141,6 +144,7 @@ export class Sim {
     p.ang = this._angleFrom(hit, mode);
     const a = p.ang * RAD;
     p.gsp = Math.abs(Math.sin(a)) < 0.4 && mode === 0 ? p.xsp : p.xsp * Math.cos(a) - p.ysp * Math.sin(a);
+    if (p.ysp > 3 * S) this.events.push({ type: 'land', x: p.x, y: p.y + PHYS.r });
     p.grounded = true; p.jumping = false;
   }
   _air(dir, jumpHeld) {
@@ -200,17 +204,19 @@ export class Sim {
     const p = this.p, P = PHYS, H = TILE / 2;
     for (const o of this.objs) {
       if (!o.alive || Math.abs(o.x - p.x) > 400 * S) continue;
+      if (o.type === 'flyer') o.y = o.y0 + Math.round(Math.sin((this.frame + o.x) / 22) * 0.9 * TILE);
+      if (o.type === 'checkpoint') { if (!o.on && Math.abs(p.x - (o.x + H)) < 13 * S && Math.abs(p.y - o.y) < 2 * TILE) { o.on = true; this.check = { x: o.x + H, y: o.y + TILE - PHYS.r - 1 }; this.events.push({ type: 'check', x: o.x + H, y: o.y }); } continue; }
       if (o.type === 'walker') {
         const f = o.vx < 0 ? -1 : 1;
         if (this.solid(Math.floor(o.x + H + f * 9 * S), o.y + H, 'A') || !this.solid(Math.floor(o.x + H + f * H), o.y + TILE + 1, 'A', true)) o.vx = -o.vx; else o.x += o.vx;
       }
       const dx = p.x - (o.x + H), dy = p.y - (o.y + H);
       if (o.type === 'goal' || Math.abs(dx) > 13 * S || Math.abs(dy) > 13 * S) continue;
-      if (o.type === 'gem') { o.alive = false; p.gems++; }
+      if (o.type === 'gem') { o.alive = false; p.gems++; this.events.push({ type: 'gem', x: o.x + H, y: o.y + H }); }
       else if (o.type === 'spring' && dy < 2 * S) { p.ysp = -P.spring; p.xsp = p.grounded ? p.gsp : p.xsp; p.grounded = false; p.jumping = false; p.ang = 0; p.y -= 2 * S; }
-      else if (o.type === 'booster' && p.grounded) { if (p.gsp * o.dir < P.boost) p.gsp = o.dir * P.boost; }
-      else if (o.type === 'walker') {
-        if (!p.grounded && p.ysp > 0 && dy < -3 * S) { o.alive = false; p.ysp = input.jump ? -P.jump : -3.5 * S; }
+      else if (o.type === 'booster' && p.grounded) { if (p.gsp * o.dir < P.boost) { p.gsp = o.dir * P.boost; this.events.push({ type: 'boost', x: p.x, y: p.y }); } }
+      else if (o.type === 'walker' || o.type === 'flyer') {
+        if (!p.grounded && p.ysp > 0 && dy < -3 * S) { o.alive = false; this.events.push({ type: 'bop', x: o.x + H, y: o.y + H }); p.ysp = input.jump ? -P.jump : -3.5 * S; }
         else if (Math.abs(dx) < 11 * S && Math.abs(dy) < 11 * S) this._die('enemy');
       }
     }

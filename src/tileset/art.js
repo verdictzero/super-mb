@@ -3,6 +3,7 @@
 import { Img } from './img.js';
 import { P } from './palette.js';
 import { TILE, S } from '../core/units.js';
+import { soilAt } from './terrain.js';
 
 // tiles are drawn on a 16-unit design grid and rasterised at S pixels per unit
 const T = () => new Img(16, 16, S);
@@ -127,6 +128,45 @@ function hanging(seed) { // stalactites / roots that hang under a ceiling (decor
   }
   return t.rect(0, 0, 16, 1, P.ceilD);
 }
+// Bedrock: the soil texture shifted two shades darker, optionally with stones or ore in it.
+const DARKER = { [P.dirt]: P.dirtD, [P.dirtL]: P.dirt, [P.dirtD]: P.dirtX, [P.dirtX]: P.dirtX };
+function deep(kind) {
+  const t = T().map((x, y, c, i, j) => {
+    const soil = soilAt(i, j);
+    if (kind === 'top') { const keep = y < 1.5 || (y < 4 && ((i >> 1) + (j >> 1)) % 2 === 0) || (y < 6.5 && (i >> 1) % 4 === 0 && (j >> 1) % 2 === 0); if (keep) return soil; }
+    return DARKER[soil];
+  });
+  if (kind === 'stones') for (const [x, y, r] of [[4, 5, 2.6], [11, 10.5, 3.2], [5.5, 12.5, 1.6]]) t.disc(x, y, r, P.stoneD).disc(x - 0.3, y - 0.4, r - 0.8, P.stone).disc(x - r / 3, y - r / 3, r / 4, P.stoneL);
+  if (kind === 'ore') for (const [x, y] of [[4, 4], [11, 6.5], [7, 12]]) t.poly([[x, y - 2.6], [x + 2.2, y], [x, y + 2.6], [x - 2.2, y]], P.gemD).poly([[x, y - 1.6], [x + 1.2, y], [x, y + 1.6], [x - 1.2, y]], P.gem).disc(x - 0.4, y - 0.5, 0.4, P.gemL);
+  if (kind === 'fossil') { t.disc(8, 8, 4.4, P.stoneL).disc(8, 8, 3.2, DARKER[P.dirt]).disc(8.8, 8.4, 2.2, P.stoneL).disc(8.8, 8.4, 1.1, DARKER[P.dirt]).rect(8, 8, 5, 5, DARKER[P.dirt]).rect(11.4, 7.4, 1.2, 4, P.stoneL); }
+  return t;
+}
+function flora() {
+  const stem = (t, x, h) => t.rect(x, 16 - h, 1, h, P.bushD);
+  const flower = (petal, core) => { const t = T(); stem(t, 7.5, 8).poly([[8, 13], [12, 10.5], [8.6, 12]], P.bush); for (let i = 0; i < 5; i++) { const a = (i * 2 * Math.PI) / 5 - Math.PI / 2; t.disc(7.5 + 3 * Math.cos(a), 6.5 + 3 * Math.sin(a), 2, petal); } return t.disc(7.5, 6.5, 1.6, core).outline(P.ink); };
+  const tuft = T();
+  for (const [x, h, lean] of [[2, 6, -2], [5, 9, -1], [8, 11, 0.5], [11, 8, 2], [14, 5, 2.5]]) tuft.poly([[x - 1.3, 16], [x + lean, 16 - h], [x + 1.3, 16]], P.grass).poly([[x - 1.3, 16], [x + lean, 16 - h], [x - 0.3, 16]], P.grassL);
+  const shroom = T().rect(6.5, 9, 3, 7, P.white).rect(8.5, 9, 1, 7, P.cloudD).disc(7.5, 8, 6, P.red).map((x, y, c) => (c === P.red && y > 9.2 ? 0 : undefined));
+  shroom.rect(6.5, 9.5, 3, 6.5, P.white).rect(8.5, 9.5, 1, 6.5, P.cloudD).disc(5, 5.5, 1.4, P.white).disc(9.5, 4, 1.1, P.white).disc(10.5, 7.5, 0.9, P.white).outline(P.ink);
+  const crystal = T();
+  for (const [x, h, w] of [[4, 8, 2.4], [8.5, 13, 3], [12.5, 6.5, 2]]) crystal.poly([[x - w, 16], [x - w, 16 - h + w], [x, 16 - h], [x + w, 16 - h + w], [x + w, 16]], P.gem).poly([[x - w, 16], [x - w, 16 - h + w], [x, 16 - h], [x - 0.3, 16]], P.gemL).poly([[x + w * 0.4, 16], [x + w, 16 - h + w], [x + w, 16]], P.gemD);
+  crystal.outline(P.ink);
+  const rock = T().disc(6, 14, 4.5, P.stone).disc(11, 14.5, 3.4, P.stone).disc(5, 12.5, 1.8, P.stoneL).map((x, y, c) => (c && y > 14.6 ? P.stoneD : undefined)).outline(P.ink);
+  const sign = T().rect(7, 9, 2, 7, P.wood).rect(8, 9, 1, 7, P.woodD).rect(1.5, 1.5, 13, 8, P.ink).rect(2.5, 2.5, 11, 6, P.woodL).rect(2.5, 7.5, 11, 1, P.wood);
+  sign.poly([[4, 4.4], [8.5, 4.4], [8.5, 2.6], [12.2, 5.5], [8.5, 8.4], [8.5, 6.6], [4, 6.6]], P.redD);
+  return { flower_0: flower(P.red, P.yellow), flower_1: flower(P.white, P.orange), tuft, mushroom: shroom, crystal, rock, sign };
+}
+function checkpoint(on) {
+  const t = T().rect(7, 6, 2, 10, P.steel).rect(7, 6, 1, 10, P.steelL).rect(5, 14, 6, 2, P.steelD);
+  t.disc(7.5, 4.5, 4.2, on ? P.yellow : P.steelD).disc(6.5, 3.5, on ? 2 : 1.2, on ? P.white : P.steel);
+  return t.outline(P.ink);
+}
+function flyer(up) {
+  const t = T();
+  for (const s of [-1, 1]) t.poly(up ? [[7.5 + s * 2, 8], [7.5 + s * 8, 1.5], [7.5 + s * 5, 9]] : [[7.5 + s * 2, 8], [7.5 + s * 8, 12], [7.5 + s * 4.5, 7]], P.foeL);
+  t.disc(7.5, 9, 4.6, P.foe).disc(6.3, 7.6, 1.4, P.foeL).rect(5, 8, 2, 3, P.white).rect(9, 8, 2, 3, P.white).rect(6, 9, 1, 2, P.ink).rect(10, 9, 1, 2, P.ink).poly([[6.5, 12.6], [7.5, 14.6], [8.5, 12.6]], P.orange);
+  return t.outline(P.ink);
+}
 function hero(roll) {
   const t = T().disc(7.5, 7.5, 7.6, P.ink).disc(7.5, 7.5, 6.5, P.hero);
   t.map((x, y, c) => (c === P.hero && (x - 4.5) ** 2 + (y - 4.5) ** 2 > 60 ? P.heroD : undefined)); // crescent shadow
@@ -179,5 +219,9 @@ export function handTiles() {
   slice('bghill', bgHill(), { kind: 'decor' });
   slice('goal_flag', g.flag, { kind: 'decor' }); // 2x2 banner
   for (let i = 0; i < 3; i++) add(`hang_${i}`, hanging(i), { kind: 'decor' });
+  for (const k of ['top', 'plain', 'stones', 'ore', 'fossil']) add(`deep_${k}`, deep(k), { kind: 'ground', mask: FULL, ang: [null, null, null, null] });
+  for (const [name, img] of Object.entries(flora())) add(name, img, { kind: 'decor' });
+  add('check_off', checkpoint(false), { kind: 'object' }); add('check_on', checkpoint(true), { kind: 'object' });
+  add('flyer_0', flyer(true), { kind: 'sprite' }); add('flyer_1', flyer(false), { kind: 'sprite' });
   return out;
 }

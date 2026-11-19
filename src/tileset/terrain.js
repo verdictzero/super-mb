@@ -29,6 +29,7 @@ for (const [x, y] of [[3, 9], [11, 1], [8, 15], [14, 6]]) { // pebbles (16px gri
   for (let j = 0; j < S; j++) for (let i = 0; i < S + 1; i++) fill(X + i, Y + j, P.dirtX);
   for (let i = 0; i < S; i++) fill(X + i, Y - 1, P.dirtL);
 }
+export const soilAt = (x, y) => FILL[(y & MK) * T + (x & MK)]; // the plain soil texture, for tiles that reuse it
 // turf depth variation along the surface (tile-periodic)
 const TUFT = Array.from({ length: T }, (_, x) => (1 + 0.6 * Math.sin((2 * Math.PI * 3 * x) / T) + 0.4 * Math.sin((2 * Math.PI * 7 * x) / T + 1)) * S);
 

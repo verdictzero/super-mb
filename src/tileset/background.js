@@ -56,7 +56,7 @@ const PAINT = {
       { name: 'mountains', img: silhouette(70, (x) => 34 + ridge([[22, 3, 0], [10, 7, 0.3], [5, 13, 0.7]], true)(x), P.bgFar, 0, P.bgFar, { c: P.bgFarL, depth: 7, below: 22 }), y: -70, factor: 0.1 },
       { name: 'water', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
       { name: 'hills', img: hills, y: 6, factor: 0.4 },
-      { name: 'treeline', img: silhouette(40, (x) => 10 + ridge([[5, 4, 0.2], [3, 19, 0], [2, 31, 0.5]])(x), P.bgNear, 3, P.bgNearD), y: 30, factor: 0.58, fill: P.dirtX },
+      { name: 'treeline', img: silhouette(40, (x) => 10 + ridge([[5, 4, 0.2], [3, 19, 0], [2, 31, 0.5]])(x), P.bgNear, 3, P.bgNearD), y: 30, factor: 0.58, fill: P.ink },
     ];
   },
   cavern(rng) {
@@ -71,7 +71,7 @@ const PAINT = {
       { name: 'stalactites', img: stal, y: 0, factor: 0.16, pin: 'top' },
       { name: 'lake', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
       { name: 'crystal-mounds', img: mounds, y: 6, factor: 0.4 },
-      { name: 'rocks', img: silhouette(40, (x) => 12 + ridge([[7, 5, 0.1], [4, 11, 0.5]], true)(x), P.bgNear, 2, P.bgMidD), y: 30, factor: 0.58, fill: P.dirtX },
+      { name: 'rocks', img: silhouette(40, (x) => 12 + ridge([[7, 5, 0.1], [4, 11, 0.5]], true)(x), P.bgNear, 2, P.bgMidD), y: 30, factor: 0.58, fill: P.ink },
     ];
   },
   dusk(rng) {
@@ -86,7 +86,7 @@ const PAINT = {
       { name: 'mesas', img: silhouette(70, mesa, P.bgFar, 2, P.bgFarL), y: -66, factor: 0.1 },
       { name: 'sea', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
       { name: 'dunes', img: dunes, y: 6, factor: 0.4 },
-      { name: 'ridge', img: silhouette(40, (x) => 10 + ridge([[6, 3, 0.3], [3, 9, 0.8]], true)(x), P.bgNear, 3, P.bgNearD), y: 30, factor: 0.58, fill: P.dirtX },
+      { name: 'ridge', img: silhouette(40, (x) => 10 + ridge([[6, 3, 0.3], [3, 9, 0.8]], true)(x), P.bgNear, 3, P.bgNearD), y: 30, factor: 0.58, fill: P.ink },
     ];
   },
 };

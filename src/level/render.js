@@ -3,7 +3,7 @@ import { themeRGBA, THEMES } from '../tileset/palette.js';
 import { TILE as T } from '../core/units.js';
 import { buildBackground, layoutBackground, HORIZON_ABOVE_GROUND } from '../tileset/background.js';
 
-export const OBJECT_TILE = { gem: 'gem', spring: 'spring', walker: 'walker_0' };
+export const OBJECT_TILE = { gem: 'gem', spring: 'spring', walker: 'walker_0', flyer: 'flyer_0', checkpoint: 'check_off' };
 export const objectTile = (o) => (o.type === 'booster' ? (o.dir < 0 ? 'booster_l' : 'booster_r') : OBJECT_TILE[o.type]);
 
 export function renderLevel(ts, level, theme = level.theme) {

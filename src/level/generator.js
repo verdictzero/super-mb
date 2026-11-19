@@ -35,7 +35,7 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 // ---- BLOCK pieces ----------------------------------------------------------------
 const BLOCK = {
-  stroll(b, r, d) { const n = r.int(4, 7); if (r.chance(d * 0.7)) b.enemy(n - 2); if (r.chance(0.5)) b.gems(3, 1, 1); b.flat(n); },
+  stroll(b, r, d) { const n = r.int(4, 7); if (r.chance(d * 0.7)) { if (r.chance(0.4)) b.flyer(n - 2, 3); else b.enemy(n - 2); } if (r.chance(0.5)) b.gems(3, 1, 1); b.flat(n); },
   blockRow(b, r, d) {
     const n = r.int(3, 7);
     let row = ''; for (let i = 0; i < n; i++) row += r.chance(0.3) ? '?' : 'B';
@@ -48,7 +48,7 @@ const BLOCK = {
     const k = r.int(1, 2 + Math.round(d));
     for (let i = 0; i < k; i++) { b.pipe(r.int(1, RULES.maxStepUp)); if (i < k - 1 && r.chance(d * 0.8)) b.enemy(2); b.flat(r.int(4, 6)); }
   },
-  pit(b, r, d) { const w = r.int(2, 2 + Math.round(d * (RULES.maxPit - 2))); b.gems(w, 2, 0, 1.5).gap(w).flat(r.int(3, 5)); },
+  pit(b, r, d) { const w = r.int(2, 2 + Math.round(d * (RULES.maxPit - 2))); if (d > 0.45 && w >= 3 && r.chance(0.5)) b.flyer(w >> 1, 4); b.gems(w, 2, 0, 1.5).gap(w).flat(r.int(3, 5)); },
   stairPit(b, r, d) { const n = r.int(2, 4); b.stairs(n, 1).gap(r.int(2, 2 + Math.round(d * 2))).stairs(n, -1).flat(3); },
   ledgeUp(b, r) { const h = r.int(1, Math.min(2, RULES.maxStepUp)); if (b.g - h < G_MIN) return false; b.flat(2).step(-h).gems(2, 1, 1).flat(r.int(4, 6)); },
   ledgeDown(b, r) { const h = r.int(1, 3); if (b.g + h > G_MAX) return false; b.flat(2).step(h).flat(r.int(4, 6)); },
@@ -195,6 +195,7 @@ function build(ts, seed, o) {
     const progress = b.x / o.length;
     const d = clamp(o.difficulty * (0.5 + 0.7 * progress) * (zone % 3 === 2 ? 0.5 : 1), 0, 1);
     const end = Math.min(o.length - 20, b.x + rng.int(30, 52));
+    if (zone > 0 && zone % 2 === 0) b.checkpoint(1).flat(3); // a lamp every other zone
     if (rng.chance(o.flow)) {
       fillZone(b, rng, FLOW, { rollers: 2, hill: 1.5, loop: 2, kicker: 1.2 + d, quarterPipe: 1, sDrop: 1.2, dropIn: 0.6, speedway: 0.8, doubleLoop: 1 + d, halfPipe: 1.5, wave: 1.5, loopKicker: 1 + d, rampJump: 1.2, skyway: 1.5 }, d, end);
     } else {

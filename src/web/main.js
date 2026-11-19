@@ -55,13 +55,36 @@ game.width = VW; game.height = VH;
 g.imageSmoothingEnabled = false;
 
 function load(level) {
-  state.level = level; state.sim = new Sim(ts, level); state.bot = new Bot(); state.wait = 0;
+  state.level = level; state.sim = new Sim(ts, level); state.bot = new Bot(); state.wait = 0; parts.length = 0; trail.length = 0;
   const p = state.sim.p;
   state.cam.x = p.x - VW / 2; state.cam.y = p.y - VH * 0.6;
   $('hudName').textContent = level.name;
   const im = renderLevel(ts, level), mini = $('mini');
   mini.width = im.w; mini.height = im.h;
   mini.getContext('2d').putImageData(new ImageData(im.rgba, im.w, im.h), 0, 0);
+}
+
+// ---- particles: small visual effects driven by sim events ------------------------
+const parts = [], trail = [];
+function burst(x, y, n, color, speed, opt = {}) {
+  for (let i = 0; i < n; i++) { const a = opt.up ? -Math.PI * (0.15 + 0.7 * Math.random()) : Math.random() * 2 * Math.PI, v = speed * (0.4 + Math.random() * 0.6); parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: opt.g ?? 0, life: opt.life ?? 24, max: opt.life ?? 24, size: opt.size ?? T / 8, color }); }
+}
+function effects(sim, level) {
+  const c = THEMES[level.theme].colors, u = T / 16;
+  for (const e of sim.events) {
+    if (e.type === 'gem') burst(e.x, e.y, 6, c.gemL, 2.2 * u, { life: 18 });
+    else if (e.type === 'brick') burst(e.x, e.y, 8, c.brick, 4 * u, { up: true, g: 0.35 * u, life: 40, size: T / 5 });
+    else if (e.type === 'bonus') parts.push({ x: e.x, y: e.y - T, vx: 0, vy: -3 * u, g: 0.2 * u, life: 26, max: 26, gem: true });
+    else if (e.type === 'land') burst(e.x, e.y, 5, c.white, 1.6 * u, { up: true, life: 14, size: T / 6 });
+    else if (e.type === 'bop') burst(e.x, e.y, 10, c.foeL, 3 * u, { life: 22, size: T / 6 });
+    else if (e.type === 'boost') burst(e.x, e.y, 10, c.yellow, 4 * u, { life: 16 });
+    else if (e.type === 'check') burst(e.x, e.y, 14, c.yellow, 3 * u, { up: true, g: 0.1 * u, life: 34 });
+  }
+  sim.events.length = 0;
+  for (let i = parts.length - 1; i >= 0; i--) { const q = parts[i]; q.x += q.vx; q.y += q.vy; q.vy += q.g; if (--q.life <= 0) parts.splice(i, 1); }
+  const p = sim.p;
+  trail.push({ x: p.x, y: p.y, fast: !p.dead && Math.abs(p.grounded ? p.gsp : p.xsp) > 0.5 * T });
+  if (trail.length > 8) trail.shift();
 }
 
 function drawTile(sheet, id, x, y) { if (id) g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, x, y, T, T); }
@@ -90,11 +113,20 @@ function draw() {
     if (!o.alive) continue;
     let name = objectTile(o);
     if (o.type === 'walker') name = `walker_${(sim.frame >> 3) & 1}`;
+    else if (o.type === 'flyer') name = `flyer_${(sim.frame >> 2) & 1}`;
+    else if (o.type === 'checkpoint') name = o.on ? 'check_on' : 'check_off';
     if (name) drawTile(sheet, ts.names[name], Math.round(o.x) - cx, o.y - cy + (o.type === 'gem' ? Math.round((T / 16) * Math.sin(sim.frame / 12 + o.x / T)) : 0));
   }
   if (!p.dead) {
     const rolling = !p.grounded || Math.abs(p.gsp) > 0.28 * T;
     const id = ts.names[rolling ? 'hero_roll' : 'hero'];
+    const roll = ts.names.hero_roll;
+    trail.forEach((q, i) => { // speed afterimages
+      if (!q.fast || i % 3 || i > 5) return;
+      g.globalAlpha = 0.12 + i * 0.05;
+      g.drawImage(sheet, ((roll - 1) % ts.columns) * T, Math.floor((roll - 1) / ts.columns) * T, T, T, Math.round(q.x) - cx - T / 2, Math.round(q.y) - cy - T / 2, T, T);
+    });
+    g.globalAlpha = 1;
     g.save();
     g.translate(Math.round(p.x) - cx, Math.round(p.y) - cy);
     if (rolling) g.rotate(p.spin); else { g.rotate((-p.ang * Math.PI) / 180); if (p.face < 0) g.scale(-1, 1); }
@@ -102,6 +134,12 @@ function draw() {
     g.restore();
   }
   for (const [id, X, Y] of front) drawTile(sheet, id, X, Y);
+  for (const q of parts) {
+    g.globalAlpha = Math.min(1, (q.life / q.max) * 1.6);
+    if (q.gem) drawTile(sheet, ts.names.gem, Math.round(q.x) - cx - T / 2, Math.round(q.y) - cy - T / 2);
+    else { g.fillStyle = q.color; g.fillRect(Math.round(q.x - q.size / 2) - cx, Math.round(q.y - q.size / 2) - cy, q.size, q.size); }
+  }
+  g.globalAlpha = 1;
   if (state.showCol) for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;
     drawTile(overlay, sim.terrain[ty * level.width + tx], tx * T - cx, ty * T - cy);
@@ -122,8 +160,9 @@ function draw() {
 function tick() {
   const { sim, keys } = state;
   state.idle += sim.p.dead || sim.p.won ? 1 : 0; // keep clouds drifting while the sim is paused
-  if (sim.p.dead || sim.p.won) { if (++state.wait > (sim.p.won ? 150 : 60)) { sim.reset(); state.bot = new Bot(); state.wait = 0; } return; }
+  if (sim.p.dead || sim.p.won) { if (++state.wait > (sim.p.won ? 150 : 60)) { sim.reset(!sim.p.won); state.bot = new Bot(); state.wait = 0; trail.length = 0; } effects(sim, state.level); return; }
   sim.step(state.useBot ? state.bot.input(sim) : { left: keys.left, right: keys.right, jump: keys.jump });
+  effects(sim, state.level);
 }
 let last = performance.now(), acc = 0;
 function frame(now) {
