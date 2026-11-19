@@ -94,9 +94,12 @@ function goal() { // pole sits left of centre so the pennant fits in the same co
   const shaft = (t, y) => t.rect(4, y, 2, 16 - y, P.steel).vline(4, y, 16 - y, P.steelL).vline(3, y, 16 - y, P.ink).vline(6, y, 16 - y, P.ink);
   const pole = shaft(T(), 0);
   const top = shaft(T(), 8).disc(4.5, 5, 3.6, P.ink).disc(4.5, 5, 2.6, P.gold).set(4, 4, P.goldL);
-  const flag = shaft(T(), 0);
-  flag.poly([[6.5, 1.5], [15.5, 7], [6.5, 12.5]], P.ink).poly([[7, 2.6], [14, 7], [7, 7]], P.red).poly([[7, 7], [14, 7], [7, 11.4]], P.redD);
-  flag.disc(9, 7, 1.2, P.yellow);
+  // banner: 2x2 tiles, swallow-tailed, hung from the top of the pole
+  const flag = new Img(32, 32, S);
+  flag.rect(4, 0, 2, 32, P.steel).vline(4, 0, 32, P.steelL).vline(3, 0, 32, P.ink).vline(6, 0, 32, P.ink);
+  flag.poly([[6.5, 0.5], [31.5, 0.5], [25, 11.5], [31.5, 22.5], [6.5, 22.5]], P.ink);
+  flag.poly([[7, 1.6], [29.4, 1.6], [23.6, 11.5], [7, 11.5]], P.red).poly([[7, 11.5], [23.6, 11.5], [29.4, 21.4], [7, 21.4]], P.redD);
+  flag.rect(7, 1.6, 2, 19.8, P.yellow).disc(15.5, 11.5, 4.6, P.ink).disc(15.5, 11.5, 3.6, P.yellow).disc(14.5, 10.5, 1.2, P.white);
   return { pole, top, flag };
 }
 function cloud() {
@@ -160,11 +163,12 @@ export function handTiles() {
   add('booster_l', bo.flipX(), { kind: 'object' });
   add('gem', gem(), { kind: 'object' });
   const g = goal();
-  add('goal_top', g.top, { kind: 'decor' }); add('goal_pole', g.pole, { kind: 'decor' }); add('goal_flag', g.flag, { kind: 'decor' });
+  add('goal_top', g.top, { kind: 'decor' }); add('goal_pole', g.pole, { kind: 'decor' });
   add('hero', hero(false), { kind: 'sprite' }); add('hero_roll', hero(true), { kind: 'sprite' });
   add('walker_0', walker(0), { kind: 'sprite' }); add('walker_1', walker(1), { kind: 'sprite' });
   slice('cloud', cloud(), { kind: 'decor' });
   slice('bush', bush(), { kind: 'decor' });
   slice('bghill', bgHill(), { kind: 'decor' });
+  slice('goal_flag', g.flag, { kind: 'decor' }); // 2x2 banner
   return out;
 }

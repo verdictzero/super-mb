@@ -1,0 +1,254 @@
+{
+ "meadow": {
+  "image": "bg-meadow.png",
+  "sky": [
+   "#58b4f5",
+   "#bfe6fb"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "clouds-far",
+    "srcY": 0,
+    "w": 512,
+    "h": 44,
+    "y": -124,
+    "factor": 0.03,
+    "drift": 0.06,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-near",
+    "srcY": 44,
+    "w": 512,
+    "h": 68,
+    "y": -192,
+    "factor": 0.06,
+    "drift": 0.14,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "mountains",
+    "srcY": 112,
+    "w": 512,
+    "h": 140,
+    "y": -140,
+    "factor": 0.1,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "water",
+    "srcY": 252,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "hills",
+    "srcY": 332,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "treeline",
+    "srcY": 436,
+    "w": 512,
+    "h": 80,
+    "y": 60,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#72301a"
+   }
+  ]
+ },
+ "cavern": {
+  "image": "bg-cavern.png",
+  "sky": [
+   "#0d1026",
+   "#1b2145"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "pillars",
+    "srcY": 0,
+    "w": 512,
+    "h": 300,
+    "y": -300,
+    "factor": 0.06,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "stalactites",
+    "srcY": 300,
+    "w": 512,
+    "h": 120,
+    "y": 0,
+    "factor": 0.16,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": true
+   },
+   {
+    "name": "lake",
+    "srcY": 420,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "crystal-mounds",
+    "srcY": 500,
+    "w": 512,
+    "h": 112,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "rocks",
+    "srcY": 612,
+    "w": 512,
+    "h": 80,
+    "y": 60,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#1a2550"
+   }
+  ]
+ },
+ "dusk": {
+  "image": "bg-dusk.png",
+  "sky": [
+   "#3b2a6e",
+   "#f29a6b"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "sun",
+    "srcY": 0,
+    "w": 512,
+    "h": 160,
+    "y": -208,
+    "factor": 0,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "streaks-far",
+    "srcY": 160,
+    "w": 512,
+    "h": 80,
+    "y": -148,
+    "factor": 0.03,
+    "drift": 0.05,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "streaks-near",
+    "srcY": 240,
+    "w": 512,
+    "h": 60,
+    "y": -200,
+    "factor": 0.07,
+    "drift": 0.12,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "mesas",
+    "srcY": 300,
+    "w": 512,
+    "h": 140,
+    "y": -132,
+    "factor": 0.1,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "sea",
+    "srcY": 440,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "dunes",
+    "srcY": 520,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "ridge",
+    "srcY": 624,
+    "w": 512,
+    "h": 80,
+    "y": 60,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#38224a"
+   }
+  ]
+ }
+}

@@ -1,6 +1,7 @@
 // Browser demo: renders the tileset, runs the sim at 60fps, and exposes the generator.
 import { buildTileset, atlasImage, toRGBA } from '../tileset/tileset.js';
-import { THEMES } from '../tileset/palette.js';
+import { THEMES, SLOTS } from '../tileset/palette.js';
+import { buildBackground, layoutBackground, HORIZON_ABOVE_GROUND } from '../tileset/background.js';
 import { EXAMPLES } from '../level/examples.js';
 import { generateLevel } from '../level/generator.js';
 import { renderLevel, objectTile } from '../level/render.js';
@@ -20,6 +21,22 @@ function canvasFrom(w, h, rgba) {
 }
 const atlases = {};
 const atlasFor = (theme) => (atlases[theme] ||= canvasFrom(atlasIdx.w, atlasIdx.h, toRGBA(atlasIdx, theme)));
+const bgs = {};
+function bgFor(theme) {
+  if (!bgs[theme]) { const bg = buildBackground(theme); bgs[theme] = { bg, canvas: new Map(bg.layers.map((l) => [l, canvasFrom(l.w, l.h, toRGBA(l.img, theme))])) }; }
+  return bgs[theme];
+}
+function drawBackground(level, cx, cy, frame) {
+  const { bg, canvas } = bgFor(level.theme);
+  const ground = (level.groundRow || 22) * T, camRef = Math.max(0, Math.min(level.height * T - VH, ground - T / 2 - VH * 0.58));
+  const horizon = ground - camRef - HORIZON_ABOVE_GROUND - (cy - camRef) * 0.3; // drifts a little with camera height
+  layoutBackground(bg, { camX: cx, horizon, frame, viewH: VH }, (l, sy, rows, dy, off) => {
+    if (sy < 0) { g.fillStyle = THEMES[level.theme].colors[SLOTS[l.fill]]; g.fillRect(0, dy, VW, rows); return; }
+    const c = canvas.get(l);
+    if (l.once) { g.drawImage(c, 0, sy, l.w, rows, -off, dy, l.w, rows); return; }
+    for (let x = -(((off % l.w) + l.w) % l.w); x < VW; x += l.w) g.drawImage(c, 0, sy, l.w, rows, x, dy, l.w, rows);
+  });
+}
 // collision overlay sheet: solid pixels tinted (path A blue, path B pink, hazards red)
 const overlay = (() => {
   const rgba = new Uint8ClampedArray(atlasIdx.w * atlasIdx.h * 4);
@@ -32,7 +49,7 @@ const overlay = (() => {
   return canvasFrom(atlasIdx.w, atlasIdx.h, rgba);
 })();
 
-const state = { level: null, sim: null, bot: new Bot(), useBot: true, showCol: false, sheetTheme: 'meadow', cam: { x: 0, y: 0 }, wait: 0, keys: {} };
+const state = { level: null, sim: null, bot: new Bot(), useBot: true, showCol: false, sheetTheme: 'meadow', cam: { x: 0, y: 0 }, wait: 0, idle: 0, keys: {} };
 const game = $('game'), g = game.getContext('2d');
 game.width = VW; game.height = VH;
 g.imageSmoothingEnabled = false;
@@ -57,6 +74,7 @@ function draw() {
   const sky = g.createLinearGradient(0, 0, 0, VH);
   sky.addColorStop(0, THEMES[level.theme].sky[0]); sky.addColorStop(1, THEMES[level.theme].sky[1]);
   g.fillStyle = sky; g.fillRect(0, 0, VW, VH);
+  drawBackground(level, cx, cy, sim.frame + state.idle);
   const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T), front = [];
   for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;
@@ -103,6 +121,7 @@ function draw() {
 
 function tick() {
   const { sim, keys } = state;
+  state.idle += sim.p.dead || sim.p.won ? 1 : 0; // keep clouds drifting while the sim is paused
   if (sim.p.dead || sim.p.won) { if (++state.wait > (sim.p.won ? 150 : 60)) { sim.reset(); state.bot = new Bot(); state.wait = 0; } return; }
   sim.step(state.useBot ? state.bot.input(sim) : { left: keys.left, right: keys.right, jump: keys.jump });
 }
@@ -138,7 +157,7 @@ $('restart').onclick = () => { state.sim.reset(); state.bot = new Bot(); };
 EXAMPLES.forEach((e, i) => { $(`lv${i}`).onclick = () => { load(e.build(ts)); showPieces(null); game.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }; });
 
 // ---- generator ------------------------------------------------------------------
-const FLOW_PIECES = new Set(['rollers', 'hill', 'loop', 'kicker', 'quarterPipe', 'sDrop', 'dropIn', 'speedway']);
+const FLOW_PIECES = new Set(['rollers', 'hill', 'loop', 'kicker', 'quarterPipe', 'sDrop', 'dropIn', 'speedway', 'doubleLoop', 'halfPipe', 'wave', 'loopKicker', 'rampJump', 'skyway']);
 function showPieces(level) {
   const chips = $('chips'); chips.textContent = '';
   if (!level) { $('genNote').textContent = 'Hand-made level loaded. Generate to see the piece list for a seed.'; return; }

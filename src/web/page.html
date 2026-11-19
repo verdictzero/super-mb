@@ -55,7 +55,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
 <div class="wrap">
   <header>
     <h1>Super MB Level Lab</h1>
-    <p>An original 32px tileset with the block-platformer basics (ground, bricks, bonus blocks, pipes, stairs) plus momentum terrain: ramps, rolling hills, quarter pipes and full loops. Everything below is drawn, laid out and played by the code in this repo.</p>
+    <p>An original 32px tileset with the block-platformer basics (ground, bricks, bonus blocks, pipes, stairs) plus momentum terrain: ramps, rolling hills, quarter pipes and full loops. Behind it, parallax backgrounds scroll in bands at different speeds. Everything below is drawn, laid out and played by the code in this repo.</p>
   </header>
 
   <section aria-label="Game">
@@ -84,7 +84,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
         <label for="theme">Theme<select id="theme"><option value="">From seed</option><option value="meadow">Meadow</option><option value="cavern">Cavern</option><option value="dusk">Dusk</option></select></label>
         <label for="flow"><span>Flow (speed terrain) <output id="flowOut">0.6</output></span><input id="flow" type="range" min="0" max="1" step="0.05" value="0.6"></label>
         <label for="diff"><span>Difficulty <output id="diffOut">0.5</output></span><input id="diff" type="range" min="0" max="1" step="0.05" value="0.5"></label>
-        <label for="len"><span>Length (tiles) <output id="lenOut">200</output></span><input id="len" type="range" min="120" max="400" step="20" value="200"></label>
+        <label for="len"><span>Length (tiles) <output id="lenOut">240</output></span><input id="len" type="range" min="120" max="400" step="20" value="240"></label>
       </div>
       <div class="row"><button id="gen" class="primary">Generate</button><button id="rand">Random seed</button></div>
       <div class="chips" id="chips" aria-label="Pieces in this level"></div>
@@ -92,7 +92,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
     </div>
     <ol class="how">
       <li><b>Pacing.</b> The level is a chain of zones. Each is a block zone (green chips) or a flow zone (orange chips); the flow slider sets the mix, difficulty rises along the level and every third zone is a breather.</li>
-      <li><b>Pieces.</b> A zone is filled with weighted pieces. Each one leaves the cursor on flat ground so any piece can follow any other, and the picker steers the ground back toward its baseline height.</li>
+      <li><b>Pieces.</b> A zone is filled with weighted pieces, from single obstacles to layered ones (upper decks, tunnels, bridges, spike trenches) and combos (double loops, half-pipes, a loop straight into a launch ramp). Each one leaves the cursor on flat ground so any piece can follow any other, and the picker steers the ground back toward its baseline height.</li>
       <li><b>Rules from physics.</b> Pits, ledges and pipes stay within one jump. Loops, quarter pipes and kickers get boosters and a run-up in front of them.</li>
       <li><b>Playtest.</b> A look-ahead bot plays the finished level. If it cannot reach the goal, the generator retries with a derived seed.</li>
     </ol>

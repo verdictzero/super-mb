@@ -4,7 +4,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { buildTileset, atlasImage, toRGBA } from '../src/tileset/tileset.js';
-import { THEMES } from '../src/tileset/palette.js';
+import { THEMES, SLOTS } from '../src/tileset/palette.js';
+import { buildBackground, HORIZON_ABOVE_GROUND } from '../src/tileset/background.js';
+import { Img } from '../src/tileset/img.js';
 import { encodePNG } from '../src/core/png.js';
 import { EXAMPLES } from '../src/level/examples.js';
 import { generateLevel } from '../src/level/generator.js';
@@ -25,6 +27,15 @@ for (const theme of Object.keys(THEMES)) {
   for (let i = 0; i < rgba.length; i += 4) if (!rgba[i + 3]) { rgba[i] = parseInt(sky.slice(1, 3), 16); rgba[i + 1] = parseInt(sky.slice(3, 5), 16); rgba[i + 2] = parseInt(sky.slice(5, 7), 16); rgba[i + 3] = 255; }
   out(`docs/tileset-${theme}.png`, encodePNG(atlas.w, atlas.h, rgba));
 }
+// parallax backgrounds: one sheet per theme (layers stacked top to bottom) plus the scroll table
+const bgMeta = {};
+for (const theme of Object.keys(THEMES)) {
+  const bg = buildBackground(theme), H = bg.layers.reduce((n, l) => n + l.h, 0), sheet = new Img(bg.width, H);
+  let y = 0;
+  bgMeta[theme] = { image: `bg-${theme}.png`, sky: THEMES[theme].sky, horizonAboveGround: HORIZON_ABOVE_GROUND, layers: bg.layers.map((l) => { sheet.blit(l.img, 0, y); const m = { name: l.name, srcY: y, w: l.w, h: l.h, y: l.y, factor: l.factor, factor2: l.factor2, drift: l.drift, lineScroll: !!l.line, once: !!l.once, pinTop: l.pin === 'top', fillBelow: l.fill ? THEMES[theme].colors[SLOTS[l.fill]] : undefined }; y += l.h; return m; }) };
+  out(`assets/bg-${theme}.png`, encodePNG(sheet.w, sheet.h, toRGBA(sheet, theme)));
+}
+out('assets/backgrounds.json', JSON.stringify(bgMeta, null, 1));
 out('assets/tileset.tsj', json(tilesetToTiled(ts, 'tileset-meadow.png', atlas.w, atlas.h)));
 // engine-side metadata: collision masks, angles, autotile table, prefab stamps
 out('assets/tileset.json', json({

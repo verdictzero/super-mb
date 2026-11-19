@@ -38,6 +38,15 @@ export class LevelBuilder {
     return this;
   }
 
+  // floating chunk of ground above the route (an upper deck); lay the route under it afterwards
+  island(len, up, dx = 0, thick = 2) {
+    for (let i = 0; i < len; i++) for (let k = 0; k < thick; k++) this.set(this.x + dx + i, this.g - up + k, GROUND);
+    return this;
+  }
+  // slab of ground hanging over the route, leaving `clearance` tiles of head room (a tunnel)
+  overhang(len, clearance = 3, thick = 3, dx = 0) { return this.island(len, clearance + thick, dx, thick); }
+  column(h) { for (let r = 1; r <= h; r++) this.put('hard', this.x, this.g - r); return this.flat(1); }
+
   // --- things placed relative to the cursor (lay the ground under them afterwards) --
   blocks(pattern, up = 4, dx = 0) {
     const map = { B: 'brick', '?': 'bonus', H: 'hard', '=': 'bridge' };
@@ -82,8 +91,11 @@ export class LevelBuilder {
     this.flat(3);
     const x = this.x, g = this.g;
     this.put('hard', x, g - 1);
-    for (let r = 2; r <= 7; r++) this.dec[x][g - r] = this.ts.names[r === 7 ? 'goal_top' : r === 6 ? 'goal_flag' : 'goal_pole'];
-    this.objects.push({ type: 'goal', x: x * T, y: (g - 8) * T, w: T, h: 7 * T });
+    this._col(x + 1);
+    const POLE = 10, n = this.ts.names;
+    for (let r = 2; r <= POLE; r++) this.dec[x][g - r] = r === POLE ? n.goal_top : n.goal_pole;
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) this.dec[x + c][g - POLE + 1 + r] = n[`goal_flag_${c}_${r}`];
+    this.objects.push({ type: 'goal', x: x * T, y: (g - POLE) * T, w: T, h: (POLE - 1) * T });
     return this.flat(6);
   }
 
@@ -93,12 +105,10 @@ export class LevelBuilder {
     for (let r = 0; r < ch; r++) for (let c = 0; c < cw; c++) this.dec[x + c][yBottom - ch + 1 + r] = this.ts.names[`${prefix}_${c}_${r}`];
     return true;
   }
-  decorate(rng, density = 1) {
+  decorate(rng, density = 1) { // clouds and distant hills come from the parallax background
     const w = this.cols.length;
     const flatRun = (x, n) => { for (let i = 0; i < n; i++) if (this.surf[x + i] == null || this.surf[x + i] !== this.surf[x]) return false; return true; };
     for (let x = 2; x < w - 6; x++) {
-      if (this.theme !== 'cavern' && rng.chance(0.1 * density)) this._stamp('cloud', 3, 2, x, rng.int(Math.max(2, this.ceiling + 2), 9));
-      if (rng.chance(0.07 * density) && flatRun(x, 5)) this._stamp('bghill', 5, 3, x, this.surf[x] / T - 1);
       if (rng.chance(0.1 * density) && flatRun(x, 3)) this._stamp('bush', 3, 1, x, this.surf[x] / T - 1);
     }
     return this;
@@ -123,6 +133,6 @@ export class LevelBuilder {
       }
       terrain[y * w + x] = id; decor[y * w + x] = this.dec[x][y];
     }
-    return { name: this.name, theme: this.theme, width: w, height: h, tile: T, terrain, decor, objects: this.objects, spawn: { x: 3.5 * T, y: this.g0 * T - T / 2 } };
+    return { name: this.name, theme: this.theme, groundRow: this.g0, width: w, height: h, tile: T, terrain, decor, objects: this.objects, spawn: { x: 3.5 * T, y: this.g0 * T - T / 2 } };
   }
 }

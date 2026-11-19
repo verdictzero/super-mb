@@ -18,6 +18,8 @@ export const SLOTS = [
   'heroD', 'hero', 'heroL',
   'foeD', 'foe', 'foeL',
   'yellow', 'orange',
+  // parallax background
+  'bgFar', 'bgFarL', 'bgMid', 'bgMidL', 'bgMidD', 'bgNear', 'bgNearD', 'bgWater', 'bgWaterL', 'bgWaterD', 'sun', 'sunL', 'bgCloud', 'bgCloudD',
 ];
 export const P = Object.fromEntries(SLOTS.map((n, i) => [n, i]));
 
@@ -46,6 +48,8 @@ export const THEMES = {
       pipeD: '#2d3a94', pipe: '#4f6fe0', pipeL: '#a9c2ff',
       bushD: '#1f7a4a', bush: '#3fb665', bushL: '#9ae88a',
       hillD: '#3d9a6e', hill: '#6fca8c',
+      bgFar: '#8fc6f2', bgFarL: '#e8f6ff', bgMid: '#4fae7a', bgMidL: '#8fdc8a', bgMidD: '#2f8a62', bgNear: '#2f9a4a', bgNearD: '#1f7a40',
+      bgWater: '#3f8fe0', bgWaterL: '#bfe6ff', bgWaterD: '#2f6fc0', sun: '#fff6c2', sunL: '#ffffff', bgCloud: '#ffffff', bgCloudD: '#cfe4f7',
     },
   },
   cavern: {
@@ -59,6 +63,8 @@ export const THEMES = {
       pipeD: '#7a2b62', pipe: '#c94f9a', pipeL: '#ffaedb',
       bushD: '#1c5c6e', bush: '#2f93a0', bushL: '#7fe0d8',
       hillD: '#1d2752', hill: '#2a3870',
+      bgFar: '#1a2350', bgFarL: '#2c3a78', bgMid: '#24306a', bgMidL: '#4fd6c8', bgMidD: '#161d48', bgNear: '#101638', bgNearD: '#0a0e26',
+      bgWater: '#14506e', bgWaterL: '#5fe8e0', bgWaterD: '#0e3450', sun: '#5fe8e0', sunL: '#d2fbff', bgCloud: '#232d62', bgCloudD: '#1a2350',
       cloudD: '#2a3870', white: '#3d4f8f',
     },
   },
@@ -73,6 +79,8 @@ export const THEMES = {
       pipeD: '#1f6a6e', pipe: '#35aaa6', pipeL: '#a2f0e0',
       bushD: '#7a3a4a', bush: '#c2603a', bushL: '#f5b05a',
       hillD: '#5a3a7e', hill: '#7a52a0',
+      bgFar: '#7a4a8e', bgFarL: '#b06a9a', bgMid: '#5a3478', bgMidL: '#8a4f8e', bgMidD: '#44265e', bgNear: '#3a2052', bgNearD: '#2a1640',
+      bgWater: '#d9706a', bgWaterL: '#ffd08a', bgWaterD: '#a8506e', sun: '#ffd27a', sunL: '#fff2c2', bgCloud: '#f2a08a', bgCloudD: '#c9708a',
       white: '#ffd9c2', cloudD: '#e89a9a',
     },
   },

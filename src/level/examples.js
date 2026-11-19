@@ -10,10 +10,13 @@ function meadowRun(ts) {
   b.gems(3, 3, 0, 1).gap(3).flat(4);                           // first pit
   b.piece('roll_up').gemsOnLast().flat(3).blocks('?B?B?', 4, 1).flat(7);
   b.piece('ramp22_down_2').flat(3);
+  b.blocks('___', 3, 1).island(9, 6, 5).gems(7, 7, 6).blocks('B?B', 10, 8).flat(6).enemy(1).gap(2).flat(10); // upper deck over a pit
+  b.flat(2).blocks('======', 0).gems(4, 1, 1).gap(6).flat(3);                           // plank bridge
   b.stairs(3, 1).gap(3).stairs(3, -1).flat(4);                 // stair gap
   b.piece('hump').gemsOnLast().flat(2).piece('dip').gemsOnLast().flat(3);
   b.flat(2).runUp(6).piece('loop6').gemsInLoop(6).flat(6);   // first loop
   b.enemy(3).flat(6).spikes(1, 2).flat(6);
+  b.column(2).flat(2).column(3).gap(2).column(2).flat(3);                              // towers
   b.flat(1).runUp(5).piece('kicker').gems(6, 3, 0, 2).gap(6).flat(8);
   b.piece('ramp45_up_2').flat(4).blocks('BB?BB', 4, 0).flat(6).piece('ramp45_down_2').flat(4);
   b.stairs(4, 1).flat(1).goal();
@@ -25,6 +28,8 @@ function cavernCoil(ts) {
   b.flat(9);
   b.step(-1).flat(4).step(-1).gems(3, 2).flat(5);              // ledges up
   b.pipe(2).flat(3).spikes(2, 1).flat(6);
+  b.flat(2).overhang(10, 3, 3).gems(8, 1, 1).enemy(7).flat(12);                         // tunnel
+  b.flat(2).step(2).spikes(5).blocks('__', 2, 2).flat(5).step(-2).flat(3);              // spike trench
   b.piece('dip').gemsOnLast().flat(2).piece('dip').gemsOnLast().flat(4);
   b.flat(1).runUp(6).piece('qp_up').flat(3).blocks('?', 4, 1).flat(5); // quarter pipe wall
   b.gap(3).flat(3).gap(4).blocks('___', 0, -4).flat(4);        // pits, plank in the second
@@ -32,6 +37,7 @@ function cavernCoil(ts) {
   b.runUp(7).piece('loop10').gemsInLoop(10).flat(4);
   b.piece('ramp22_up_1').flat(3).blocks('B?B', 4, 0).flat(5).piece('ramp22_down_1').flat(3);
   b.spring(2).flat(3).step(-5).gems(4, 2, 1).flat(13);          // spring up to a shelf
+  b.piece('qp_down').gems(3, 1, 1).runUp(6).piece('qp_up').flat(12);                    // half-pipe
   b.piece('qp_down').flat(3).piece('roll_down').gemsOnLast().flat(5);
   b.pipe(3).flat(4).enemy(1).flat(4).pipe(2).flat(4);
   b.goal();
@@ -46,9 +52,12 @@ function duskSpeedway(ts) {
   b.piece('roll_up').gemsOnLast().flat(2).piece('roll_up').gemsOnLast().flat(4);
   b.flat(1).runUp(5).piece('kicker').gems(8, 4, 0, 2).gap(9).step(2).flat(8); // big jump down
   b.blocks('___', 3, 2).blocks('?', 7, 3).flat(8).enemy(0).flat(5);
+  b.flat(1).runUp(4).island(8, 5, 2, 1).gems(7, 6, 2).gems(9, 1, 1).flat(11);           // skyway
+  b.flat(1).runUp(4).piece('hump').gemsOnLast().piece('dip').gemsOnLast().piece('hump').gemsOnLast().flat(3); // wave
   b.piece('sdrop').gemsOnLast().flat(3).booster(0).flat(4).piece('dip').gemsOnLast().flat(3);
   b.piece('ramp45_up_3').flat(5).gap(4).flat(4).piece('ramp22_up_2').flat(6);
   b.spikes(2, 2).flat(8).piece('ramp45_down_3').flat(3);
+  b.flat(1).runUp(6).piece('loop6').gemsInLoop(6).flat(2).runUp(4).piece('kicker').gems(7, 3, 0, 2).gap(7).flat(8); // loop into kicker
   b.flat(1).runUp(6).piece('qp_up').flat(6).stairs(3, 1).flat(1);
   b.goal();
   return b.decorate(makeRng(33)).finish();
