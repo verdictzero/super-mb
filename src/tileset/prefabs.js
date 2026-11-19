@@ -31,6 +31,10 @@ export function prefabDefs() {
     const T = U, Wb = 2 * R + 2 * T, Ht = 2 * R + T, cx = Wb / 2, cy = -R;
     defs.push({
       name, type: 'mask', x0: -U, x1: Wb + U, y0: -Ht, y1: U, dy: 0, W: Wb,
+      // The entry road is the floor: on path A you roll along it through the ring's left foot to the
+      // bottom of the loop, and on path B back out through the right foot. So the floor's striped
+      // surface is drawn straight through both feet instead of stopping at them.
+      floorThrough: true,
       // A ring standing on the floor, not a block with a hole: the floor runs straight in at
       // ground level with open air around it, and you only cross the thin band of the ring.
       solid(x, y) {

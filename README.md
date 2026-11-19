@@ -20,7 +20,7 @@ lollipop trees, lit skylines, stepped pyramids). The three themes are Garden, Ne
 
 | Path | What |
 | --- | --- |
-| `assets/tileset-{meadow,cavern,dusk}.png` | The tile sheet in three themes (32 columns, 32px tiles, 610 tiles) |
+| `assets/tileset-{meadow,cavern,dusk}.png` | The tile sheet in three themes (32 columns, 32px tiles, 585 tiles) |
 | `assets/bg-{meadow,cavern,dusk}.png`, `assets/backgrounds.json` | Parallax background strips and their scroll table |
 | `assets/props-{meadow,cavern,dusk}.png`, `assets/props.json` | Big background set pieces and their rectangles |
 | `assets/shaders/*.frag` | The CRT television shader passes |

@@ -56,6 +56,10 @@ export function buildTileset() {
   for (const d of prefabDefs()) {
     const w = (d.x1 - d.x0) / TILE, h = (d.y1 - d.y0) / TILE;
     const r = renderTerrain(w * TILE, h * TILE, (x, y) => d.solid(x + d.x0, y + d.y0));
+    if (d.floorThrough) { // draw the floor's surface unbroken across the piece (art only; collision is unchanged)
+      const floor = renderTerrain(w * TILE, h * TILE, (x, y) => y + d.y0 >= 0), y0 = -d.y0, rows = Math.round(TILE * 0.4);
+      for (let y = y0; y < y0 + rows; y++) for (let x = 0; x < w * TILE; x++) r.img.px(x, y, floor.img.at(x, y));
+    }
     const cells = [];
     for (let row = 0; row < h; row++) {
       const line = [];
