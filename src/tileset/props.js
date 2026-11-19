@@ -120,18 +120,88 @@ const PAINT = {
   },
 };
 
+// --- animated factory machinery: each takes a phase t in [0, 1) and is rendered as FRAMES frames ---
+const cog = (g, cx, cy, r, teeth, rot, body, rim, hub) => { // toothed wheel with spokes, turned by `rot` radians
+  g.map((x, y) => { const d = Math.hypot(x - cx, y - cy), a = ang(x, y, cx, cy) - rot; if (d > r + (Math.floor(((a % TAU) + TAU) / (Math.PI / teeth)) % 2 ? r * 0.2 : 0)) return undefined; return d < r * 0.2 ? hub : d < r * 0.3 ? rim : d < r * 0.72 ? (Math.abs(Math.sin((a * 3))) < 0.28 ? rim : undefined) : d < r * 0.82 ? rim : body; });
+  return g;
+};
+const ANIM = {
+  cogs(t) { // big gear driving a small one
+    const g = new Img(120, 96, S);
+    g.rect(22, 60, 12, 36, P.bgNearD).rect(82, 62, 10, 34, P.bgNearD).rect(10, 90, 100, 6, P.bgNear).rect(10, 90, 100, 2, P.bgFarL);
+    cog(g, 42, 46, 34, 12, t * (TAU / 12), P.bgFar, P.bgFarL, P.bgNearD);
+    cog(g, 93, 52, 17, 6, -t * (TAU / 6) + 0.26, P.bgMidL, P.sunL, P.bgNearD);
+    return g.outline(P.bgNearD);
+  },
+  pistons(t) { // twin pistons pumping in opposite phase over a crank case
+    const g = new Img(88, 112, S);
+    g.rect(4, 70, 80, 42, P.bgFar).rect(4, 70, 80, 3, P.bgFarL).rect(4, 106, 80, 6, P.bgNear);
+    for (let i = 0; i < 6; i++) g.disc(12 + i * 13, 100, 2, P.bgNearD);
+    [0, 1].forEach((k) => {
+      const x = 14 + k * 36, up = 26 * (0.5 + 0.5 * Math.sin(TAU * t + k * Math.PI));
+      g.rect(x + 9, 30 + (26 - up), 6, 40 + up, P.bgFarL).rect(x + 10, 30 + (26 - up), 2, 40 + up, P.white); // rod
+      g.rect(x, 12 + (26 - up), 24, 20, P.bgMidL).rect(x, 12 + (26 - up), 24, 3, P.sunL).rect(x, 28 + (26 - up), 24, 4, P.bgMidD); // head
+      g.rect(x - 2, 56, 28, 16, P.bgMid).rect(x - 2, 56, 28, 2, P.bgFarL); // cylinder
+    });
+    return g.outline(P.bgNearD);
+  },
+  boiler(t) { // tank with a bubbling sight glass, a gauge and a blinking lamp
+    const g = new Img(72, 104, S);
+    g.rect(10, 92, 8, 12, P.bgNearD).rect(54, 92, 8, 12, P.bgNearD);
+    g.map((x, y) => { const e = ((x - 35.5) / 30) ** 2 + ((y - 56) / 40) ** 2; return e <= 1 ? ((x - 22) ** 2 / 500 + (y - 36) ** 2 / 900 > 1.3 ? P.bgMidD : P.bgMid) : undefined; });
+    for (const y of [34, 56, 78]) g.map((x, yy, c) => (c && Math.abs(yy - y) < 1.2 ? P.bgFarL : undefined));
+    g.rect(27, 40, 10, 36, P.bgNearD).map((x, y) => { if (x < 28 || x >= 36 || y < 41 || y >= 75) return undefined; const lvl = 52 + 3 * Math.sin(TAU * t + x); return y < lvl ? P.bgNear : ((Math.floor(x * 3 + y * 5 + t * 24) % 11 === 0) ? P.bgWaterL : P.bgWater); });
+    g.disc(50, 46, 7, P.bgNearD).disc(50, 46, 5.6, P.white); const na = -Math.PI * 0.75 + 0.9 * Math.sin(TAU * t) + 0.8; line(g, 50, 46, 50 + 5 * Math.cos(na), 46 + 5 * Math.sin(na), 1.2, P.bgNearD);
+    g.rect(31, 8, 9, 10, P.bgFar).disc(35.5, 6, 4, Math.floor(t * 6) % 2 ? P.sun : P.bgMidD);
+    return g.outline(P.bgNearD);
+  },
+  stack(t) { // smokestack: puffs rise and thin out
+    const g = new Img(64, 150, S);
+    for (let k = 0; k < 3; k++) { const u = (t + k / 3) % 1, y = 46 - u * 44, r = 5 + u * 9; g.disc(32 + Math.sin((u + k) * 5) * 6 * u + 6 * u, y, r, P.bgCloud).disc(34 + Math.sin((u + k) * 5) * 6 * u + 6 * u, y + 2, r * 0.6, P.bgCloudD); }
+    g.map((x, y) => (y >= 50 && Math.abs(x - 31.5) <= 9 + (y - 50) * 0.06 ? (Math.floor(y / 12) % 2 ? P.bgMidL : P.bgNearD) : undefined)).rect(20, 48, 23, 4, P.bgFarL);
+    g.map((x, y, c) => (c && y >= 52 && x < 26 ? P.bgFarL : undefined));
+    return g.outline(P.bgNearD);
+  },
+  flywheel(t) { // engine: flywheel, crank and a sliding rod
+    const g = new Img(128, 80, S), cx = 36, cy = 40, a = TAU * t, px = cx + 22 * Math.cos(a), py = cy + 22 * Math.sin(a), sx = 96 + 14 * Math.cos(a);
+    g.rect(4, 72, 120, 8, P.bgNear).rect(4, 72, 120, 2, P.bgFarL).rect(30, 40, 12, 34, P.bgNearD).rect(84, 30, 40, 24, P.bgMid).rect(84, 30, 40, 3, P.bgFarL).rect(84, 50, 40, 4, P.bgMidD).rect(96, 54, 16, 18, P.bgNearD);
+    cog(g, cx, cy, 30, 16, a, P.bgFar, P.bgFarL, P.bgNearD);
+    line(g, px, py, sx, 42, 3, P.sunL); g.disc(px, py, 3, P.sun).rect(sx - 2, 38, 30, 8, P.bgFarL).rect(sx - 2, 38, 30, 2, P.white);
+    return g.outline(P.bgNearD);
+  },
+  tank(t) { // storage sphere on legs: level sloshes, pipe drips
+    const g = new Img(88, 120, S), cx = 43.5, cy = 46, r = 40;
+    line(g, 16, 70, 8, 120, 5, P.bgNearD); line(g, 71, 70, 79, 120, 5, P.bgNearD); line(g, 43.5, 80, 43.5, 120, 5, P.bgNearD); line(g, 10, 104, 78, 104, 2, P.bgNearD);
+    g.map((x, y) => { const d = Math.hypot(x - cx, y - cy); if (d > r) return undefined; const lvl = cy + 6 + 5 * Math.sin(TAU * t + x * 0.08); return d > r - 3 ? P.bgFarL : y > lvl ? (y < lvl + 2 ? P.bgWaterL : P.bgWater) : (x - cx + 14) ** 2 + (y - cy + 14) ** 2 > 1500 ? P.bgMidD : P.bgMid; });
+    g.disc(cx - 16, cy - 18, 5, P.white).rect(40, 0, 7, 8, P.bgFar).rect(36, 0, 15, 3, P.bgFarL);
+    const dy = 88 + ((t * 30) % 30); g.rect(43, dy, 2, 4, P.bgWaterL);
+    return g.outline(P.bgNearD);
+  },
+  pipeworks(t) { // pipe run with liquid moving through it and a turning valve wheel
+    const g = new Img(144, 72, S);
+    for (const x of [14, 72, 128]) g.rect(x, 30, 8, 42, P.bgNearD).rect(x, 30, 2, 42, P.bgNear);
+    for (const [y, dir] of [[10, 1], [30, -1]]) g.map((x, yy) => { if (yy < y || yy >= y + 12) return undefined; const k = Math.floor((x * dir - t * 16 + 1000) / 8) % 2; return yy < y + 2 ? P.bgFarL : yy >= y + 10 ? P.bgMidD : yy >= y + 4 && yy < y + 8 ? (k ? P.bgWater : P.bgWaterL) : P.bgMid; });
+    for (const x of [40, 100]) g.rect(x, 7, 6, 18, P.bgFar).rect(x, 27, 6, 18, P.bgFar);
+    cog(g, 72, 36, 11, 5, t * (TAU / 5), P.sun, P.sunL, P.bgNearD);
+    return g.outline(P.bgNearD);
+  },
+};
+export const FRAMES = 8;
+
 // sky: floats in the air instead of standing on the ground. sink: how far the base goes into the ground (px).
 const INFO = { balloon: { sky: true }, blimp: { sky: true }, hoop: { sky: true }, gear: { sink: 0 }, waterfall: { sink: 6 * S } };
 export const PROP_SETS = {
   meadow: ['bigtree', 'bigtree', 'arch', 'totem', 'balloon', 'waterfall', 'orb', 'hoop', 'palm', 'ferris'],
   cavern: ['pylon', 'pylon', 'crystals', 'crystals', 'gear', 'column', 'ferris', 'orb', 'hoop', 'blimp'],
   dusk: ['palm', 'palm', 'totem', 'arch', 'blimp', 'balloon', 'ferris', 'column', 'gear', 'orb'],
+  factory: ['cogs', 'pistons', 'boiler', 'stack', 'flywheel', 'tank', 'pipeworks', 'cogs', 'pistons', 'pylon', 'blimp'],
 };
 
 let cached = null;
 export function buildProps() {
   if (cached) return cached;
   cached = {};
-  for (const [name, paint] of Object.entries(PAINT)) { const img = paint(); cached[name] = { name, img, w: img.w, h: img.h, sky: false, sink: 3 * S, ...INFO[name] }; }
+  for (const [name, paint] of Object.entries(PAINT)) { const img = paint(); cached[name] = { name, img, frames: [img], w: img.w, h: img.h, sky: false, sink: 3 * S, ...INFO[name] }; }
+  for (const [name, paint] of Object.entries(ANIM)) { const frames = Array.from({ length: FRAMES }, (_, i) => paint(i / FRAMES)); cached[name] = { name, img: frames[0], frames, w: frames[0].w, h: frames[0].h, sky: false, sink: 3 * S }; }
   return cached;
 }

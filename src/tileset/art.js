@@ -169,6 +169,31 @@ function flyer(up) {
   t.disc(7.5, 9, 4.6, P.foe).disc(6.3, 7.6, 1.4, P.foeL).rect(5, 8, 2, 3, P.white).rect(9, 8, 2, 3, P.white).rect(6, 9, 1, 2, P.ink).rect(10, 9, 1, 2, P.ink).poly([[6.5, 12.6], [7.5, 14.6], [8.5, 12.6]], P.orange);
   return t.outline(P.ink);
 }
+// --- factory machinery ---
+function belt(f) { // conveyor, moving right; f = frame 0..3
+  const t = T().rect(0, 0, 16, 16, P.ink).rect(0, 1, 16, 4, P.steelD).rect(0, 1, 16, 1, P.steel).rect(0, 6, 16, 9, P.stoneD);
+  for (let x = -8; x < 20; x += 8) t.poly([[x + f * 2, 1.5], [x + 2.5 + f * 2, 3], [x + f * 2, 4.5], [x - 1.5 + f * 2, 4.5], [x + 1 + f * 2, 3], [x - 1.5 + f * 2, 1.5]], P.yellow);
+  for (const cx of [3.5, 11.5]) { t.disc(cx, 10, 3.6, P.ink).disc(cx, 10, 2.8, P.steel).disc(cx, 10, 1, P.ink); const a = (f * Math.PI) / 4; t.rect(cx + 1.8 * Math.cos(a) - 0.5, 10 + 1.8 * Math.sin(a) - 0.5, 1, 1, P.steelL).rect(cx - 1.8 * Math.cos(a) - 0.5, 10 - 1.8 * Math.sin(a) - 0.5, 1, 1, P.steelL); }
+  return t;
+}
+function acid(f) { // liquid surface with a travelling ripple
+  return T().map((x, y) => { const top = 4 + 1.4 * Math.sin(((x + 0.5) / 16) * 2 * Math.PI + (f * Math.PI) / 2); if (y < top) return undefined; if (y < top + 1.2) return P.acidL; const bub = (Math.floor(x * 0.9 + f * 2.3) * 7 + Math.floor(y * 0.8) * 13) % 37 === 0; return bub ? P.acidL : y > 11 ? P.acidD : P.acid; });
+}
+function vent() { const t = T().rect(1, 11, 14, 5, P.ink).rect(2, 12, 12, 3, P.steel).rect(2, 12, 12, 1, P.steelL); for (const x of [3.5, 6.5, 9.5, 12.5]) t.rect(x - 0.5, 13, 1, 2, P.ink); return t.rect(0, 15, 16, 1, P.steelD); }
+function steam(f) { const t = T(); for (const [x, y, r] of [[[5, 11, 4], [10, 6, 5], [7, 3, 3]], [[9, 12, 4], [5, 7, 5], [10, 3, 3.5]], [[6, 10, 5], [11, 9, 3.5], [8, 4, 4]]][f]) t.disc(x, y, r, P.white).disc(x + 1, y + 1, r * 0.55, P.cloudD); return t; }
+function crusher() { // rod (repeats) and a two-tile-wide head with a hazard-striped face
+  const rod = T().rect(4, 0, 8, 16, P.ink).rect(5, 0, 6, 16, P.steel).rect(6, 0, 2, 16, P.steelL).rect(9.5, 0, 1.5, 16, P.steelD);
+  const head = new Img(32, 16, S).rect(0, 0, 32, 16, P.ink).rect(1, 1, 30, 10, P.stone).rect(1, 1, 30, 2, P.stoneL).rect(1, 9, 30, 2, P.stoneD);
+  head.map((x, y) => (y >= 11.5 && y < 15 && x >= 1 && x < 31 ? (Math.floor((x + y) / 3) % 2 ? P.yellow : P.ink) : undefined));
+  for (const x of [5, 15.5, 26]) head.disc(x, 5.5, 1.6, P.stoneD).disc(x - 0.4, 5.1, 0.6, P.stoneL);
+  return { rod, head };
+}
+function factoryDecor() {
+  const barrel = T().rect(3, 3, 10, 13, P.ink).rect(4, 4, 8, 11, P.pipe).rect(5, 4, 2, 11, P.pipeL).rect(10, 4, 2, 11, P.pipeD).rect(3, 6, 10, 1.5, P.ink).rect(3, 11.5, 10, 1.5, P.ink).poly([[6.5, 10.5], [8, 7.6], [9.5, 10.5]], P.yellow);
+  const cone = T().poly([[2, 15.5], [7.9, 1.5], [13.8, 15.5]], P.ink).poly([[3.6, 14.6], [7.9, 3.6], [12.2, 14.6]], P.orange).map((x, y, c) => (c === P.orange && ((y > 6 && y < 8.5) || (y > 10.5 && y < 13)) ? P.white : undefined)).rect(1, 14, 14, 2, P.ink);
+  const valve = T().rect(7, 8, 2, 8, P.steelD).rect(0, 12, 16, 3, P.pipe).rect(0, 12, 16, 1, P.pipeL).rect(0, 14, 16, 1, P.pipeD).disc(7.5, 5.5, 5, P.ink).disc(7.5, 5.5, 4, P.red).disc(7.5, 5.5, 2.4, 0).rect(7, 1.5, 1, 8, P.red).rect(3.5, 5, 8, 1, P.red).disc(7.5, 5.5, 1, P.ink);
+  return { barrel, cone, valve };
+}
 function hero(roll) {
   const t = T().disc(7.5, 7.5, 7.6, P.ink).disc(7.5, 7.5, 6.5, P.hero);
   t.map((x, y, c) => (c === P.hero && (x - 4.5) ** 2 + (y - 4.5) ** 2 > 60 ? P.heroD : undefined)); // crescent shadow
@@ -225,6 +250,14 @@ export function handTiles() {
   for (const [name, img] of Object.entries(flora())) add(name, img, { kind: 'decor' });
   add('check_off', checkpoint(false), { kind: 'object' }); add('check_on', checkpoint(true), { kind: 'object' });
   add('spring_hi', spring(true), { kind: 'object' });
+  // animated tiles: frames are consecutive ids; the first one carries the frame count
+  for (const dir of [1, -1]) for (let f = 0; f < 4; f++) { const fr = dir > 0 ? f : 3 - f; add(`belt_${dir > 0 ? 'r' : 'l'}_${f}`, belt(fr), { kind: 'block', block: 'belt', belt: dir, mask: FULL, ...(f === 0 ? { frames: 4 } : {}) }); }
+  for (let f = 0; f < 4; f++) add(`acid_${f}`, acid(f), { kind: 'hazard', mask: rows(5, 15), ...(f === 0 ? { frames: 4 } : {}) });
+  add('vent', vent(), { kind: 'object' });
+  for (let f = 0; f < 3; f++) add(`steam_${f}`, steam(f), { kind: 'sprite' });
+  const cr = crusher();
+  add('crusher_rod', cr.rod, { kind: 'object' }); slice('crusher_head', cr.head, { kind: 'object' });
+  for (const [name, img] of Object.entries(factoryDecor())) add(name, img, { kind: 'decor' });
   add('flyer_0', flyer(true), { kind: 'sprite' }); add('flyer_1', flyer(false), { kind: 'sprite' });
   return out;
 }

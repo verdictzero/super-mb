@@ -97,3 +97,25 @@ test('checkpoints: touching a lamp moves the respawn point', () => {
   sim.reset();
   assert.equal(sim.p.x, level.spawn.x);
 });
+
+test('factory: belts carry, vents lift, presses only catch jumpers, acid kills', () => {
+  const mk = (fn) => { const b = new LevelBuilder(ts, { theme: 'factory', height: 40, ground: 30 }); b.flat(2); fn(b); b.flat(20); return new Sim(ts, b.finish()); }; // the player starts on column 3
+  let sim = mk((b) => b.belt(12, 1));
+  for (let i = 0; i < 120; i++) sim.step({});
+  assert.ok(sim.p.x > sim.level.spawn.x + 3 * TILE, 'standing still on a belt moves you');
+  sim = mk((b) => b.vent(1, 0).flat(2));
+  let top = Infinity;
+  for (let i = 0; i < 200; i++) { sim.step({}); top = Math.min(top, sim.p.y); }
+  assert.ok(top < sim.level.spawn.y - 6 * TILE, 'vent launches');
+  const hall = (b) => b.overhang(10, 4, 2, -2).crusher(1, 4, 90).crusher(4, 4, 90).flat(6);
+  sim = mk(hall);
+  for (let i = 0; i < 300; i++) sim.step({ right: i > 20 });
+  assert.ok(!sim.p.dead, 'rolling under the presses is safe');
+  sim = mk(hall);
+  for (let i = 0; i < 300 && !sim.p.dead; i++) sim.step({ jump: i % 12 < 8 });
+  assert.equal(sim.p.why, 'crushed');
+  sim = mk((b) => b.acid(3));
+  for (let i = 0; i < 200 && !sim.p.dead; i++) sim.step({ right: true });
+  assert.ok(sim.p.dead);
+  assert.ok(generateLevel(ts, { seed: 5, theme: 'factory' }).meta.pieces.some((q) => ['conveyor', 'acidVat', 'beltVat', 'press', 'ventShelf'].includes(q.piece)));
+});

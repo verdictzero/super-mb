@@ -2,113 +2,211 @@
  "props": {
   "totem": {
    "x": 0,
-   "y": 112,
+   "y": 124,
    "w": 64,
    "h": 176,
+   "frames": 1,
+   "frameStep": 68,
    "sky": false,
    "sink": 6
   },
   "arch": {
    "x": 68,
-   "y": 88,
+   "y": 100,
    "w": 224,
    "h": 200,
+   "frames": 1,
+   "frameStep": 228,
    "sky": false,
    "sink": 6
   },
   "bigtree": {
    "x": 296,
-   "y": 48,
+   "y": 60,
    "w": 144,
    "h": 240,
+   "frames": 1,
+   "frameStep": 148,
    "sky": false,
    "sink": 6
   },
   "palm": {
    "x": 444,
-   "y": 80,
+   "y": 92,
    "w": 160,
    "h": 208,
+   "frames": 1,
+   "frameStep": 164,
    "sky": false,
    "sink": 6
   },
   "ferris": {
    "x": 608,
-   "y": 0,
+   "y": 12,
    "w": 272,
    "h": 288,
+   "frames": 1,
+   "frameStep": 276,
    "sky": false,
    "sink": 6
   },
   "pylon": {
    "x": 884,
-   "y": 16,
+   "y": 28,
    "w": 112,
    "h": 272,
+   "frames": 1,
+   "frameStep": 116,
    "sky": false,
    "sink": 6
   },
   "crystals": {
    "x": 1000,
-   "y": 88,
+   "y": 100,
    "w": 176,
    "h": 200,
+   "frames": 1,
+   "frameStep": 180,
    "sky": false,
    "sink": 6
   },
   "waterfall": {
    "x": 1180,
-   "y": 80,
+   "y": 92,
    "w": 112,
    "h": 208,
+   "frames": 1,
+   "frameStep": 116,
    "sky": false,
    "sink": 12
   },
   "balloon": {
    "x": 1296,
-   "y": 88,
+   "y": 100,
    "w": 128,
    "h": 200,
+   "frames": 1,
+   "frameStep": 132,
    "sky": true,
    "sink": 6
   },
   "blimp": {
    "x": 1428,
-   "y": 176,
+   "y": 188,
    "w": 248,
    "h": 112,
+   "frames": 1,
+   "frameStep": 252,
    "sky": true,
    "sink": 6
   },
   "gear": {
    "x": 1680,
-   "y": 164,
+   "y": 176,
    "w": 208,
    "h": 124,
+   "frames": 1,
+   "frameStep": 212,
    "sky": false,
    "sink": 0
   },
   "orb": {
    "x": 1892,
-   "y": 96,
+   "y": 108,
    "w": 112,
    "h": 192,
+   "frames": 1,
+   "frameStep": 116,
    "sky": false,
    "sink": 6
   },
   "hoop": {
    "x": 2008,
-   "y": 144,
+   "y": 156,
    "w": 144,
    "h": 144,
+   "frames": 1,
+   "frameStep": 148,
    "sky": true,
    "sink": 6
   },
   "column": {
    "x": 2156,
-   "y": 80,
+   "y": 92,
    "w": 80,
    "h": 208,
+   "frames": 1,
+   "frameStep": 84,
+   "sky": false,
+   "sink": 6
+  },
+  "cogs": {
+   "x": 2240,
+   "y": 108,
+   "w": 240,
+   "h": 192,
+   "frames": 8,
+   "frameStep": 244,
+   "sky": false,
+   "sink": 6
+  },
+  "pistons": {
+   "x": 4192,
+   "y": 76,
+   "w": 176,
+   "h": 224,
+   "frames": 8,
+   "frameStep": 180,
+   "sky": false,
+   "sink": 6
+  },
+  "boiler": {
+   "x": 5632,
+   "y": 92,
+   "w": 144,
+   "h": 208,
+   "frames": 8,
+   "frameStep": 148,
+   "sky": false,
+   "sink": 6
+  },
+  "stack": {
+   "x": 6816,
+   "y": 0,
+   "w": 128,
+   "h": 300,
+   "frames": 8,
+   "frameStep": 132,
+   "sky": false,
+   "sink": 6
+  },
+  "flywheel": {
+   "x": 7872,
+   "y": 140,
+   "w": 256,
+   "h": 160,
+   "frames": 8,
+   "frameStep": 260,
+   "sky": false,
+   "sink": 6
+  },
+  "tank": {
+   "x": 9952,
+   "y": 60,
+   "w": 176,
+   "h": 240,
+   "frames": 8,
+   "frameStep": 180,
+   "sky": false,
+   "sink": 6
+  },
+  "pipeworks": {
+   "x": 11392,
+   "y": 156,
+   "w": 288,
+   "h": 144,
+   "frames": 8,
+   "frameStep": 292,
    "sky": false,
    "sink": 6
   }
@@ -149,6 +247,19 @@
    "column",
    "gear",
    "orb"
+  ],
+  "factory": [
+   "cogs",
+   "pistons",
+   "boiler",
+   "stack",
+   "flywheel",
+   "tank",
+   "pipeworks",
+   "cogs",
+   "pistons",
+   "pylon",
+   "blimp"
   ]
  }
 }

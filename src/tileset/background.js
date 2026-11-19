@@ -108,7 +108,48 @@ function planet(ringed) { // huge body low in the sky
   return g.disc(cx - 11, cy - 12, 3, P.white);
 }
 
+// --- factory skyline pieces ---
+function plant(h, rng) { // far works: chimneys with warning lights, tanks and sheds
+  const g = new Img(W, h, S);
+  for (let i = 0; i < 9; i++) { const x = rng.int(0, W), w = rng.int(5, 9), th = rng.int(h * 0.45, h - 8); wrapX((o) => { g.rect(x + o, h - th, w, th, P.bgFar).rect(x + o, h - th, 1.5, th, P.bgFarL).rect(x + o - 1, h - th, w + 2, 3, P.bgFarL).rect(x + o + w / 2 - 1, h - th - 3, 2, 2, P.bgMidL); for (let y = h - th + 10; y < h - 6; y += 14) g.rect(x + o, y, w, 3, P.bgMidD); }); }
+  for (let i = 0; i < 6; i++) { const x = rng.int(0, W), r = rng.int(10, 18); wrapX((o) => g.disc(x + o, h - r * 0.7, r, P.bgFar).disc(x + o - r * 0.35, h - r, r * 0.2, P.bgFarL).rect(x + o - r, h - r * 0.4, 2 * r, r * 0.4, P.bgFar)); }
+  for (let i = 0; i < 5; i++) { const x = rng.int(0, W), w = rng.int(24, 40), th = rng.int(14, 26); wrapX((o) => { g.rect(x + o, h - th, w, th, P.bgMidD).rect(x + o, h - th, w, 2, P.bgFarL); for (let k = 3; k < w - 3; k += 6) g.rect(x + o + k, h - th + 6, 3, 4, rng.chance(0.6) ? P.sun : P.bgFar); }); }
+  return g;
+}
+function girders(h, rng) { // lattice trusses and hanging hooks
+  const g = new Img(W, h, S);
+  const beam = (x0, y0, x1, y1, w, c) => g.poly([[x0, y0 - w / 2], [x1, y1 - w / 2], [x1, y1 + w / 2], [x0, y0 + w / 2]], c);
+  wrapX((o) => { beam(o, 14, o + W, 14, 3, P.bgMid); beam(o, 30, o + W, 30, 3, P.bgMid); for (let x = 0; x < W; x += 16) { beam(o + x, 14, o + x + 8, 30, 1.6, P.bgMid); beam(o + x + 8, 30, o + x + 16, 14, 1.6, P.bgMid); } });
+  for (let x = 20; x < W; x += 64) wrapX((o) => g.rect(x + o, 12, 6, h - 12, P.bgMidD).rect(x + o, 12, 1.5, h - 12, P.bgMid));
+  for (const x of [52, 148, 222]) wrapX((o) => g.rect(x + o, 31, 1.5, 12, P.bgMidL).rect(x + o - 3, 43, 8, 3, P.bgMidL).rect(x + o + 3.5, 46, 1.5, 4, P.bgMidL));
+  return g.map((x, y, c) => (c === P.bgMid && y > 12 && y < 13 ? P.bgFarL : undefined));
+}
+function pipeRow(h, rng) { // near pipes, valves and hazard-striped drums
+  const g = new Img(W, h, S);
+  wrapX((o) => g.rect(o, 10, W, 8, P.bgNear).rect(o, 10, W, 2, P.bgMid).rect(o, 24, W, 6, P.bgNear).rect(o, 24, W, 1.5, P.bgMid).rect(o, 30, W, h - 30, P.bgNearD));
+  for (let x = 12; x < W; x += 40) wrapX((o) => g.rect(x + o, 6, 5, 28, P.bgNear).rect(x + o, 6, 5, 2, P.bgMid).rect(x + o + 12, 2, 12, 10, P.bgNearD).map((px, py) => (px >= x + o + 12 && px < x + o + 24 && py >= 4 && py < 8 ? (Math.floor((px + py) / 3) % 2 ? P.bgMidL : P.bgNearD) : undefined)));
+  return g;
+}
+function megaTanks(h, rng) { // colossal spheres on legs joined by pipe bridges
+  const g = new Img(W, h, S);
+  for (const [x, r] of [[56, 34], [176, 26]]) wrapX((o) => { const cy = h - r - 16; g.rect(x + o - r * 0.6, cy, 4, h - cy, P.bgMidD).rect(x + o + r * 0.6 - 4, cy, 4, h - cy, P.bgMidD); g.map((px, py) => ((px - x - o) ** 2 + (py - cy) ** 2 <= r * r ? ((px - x - o + r * 0.4) ** 2 + (py - cy + r * 0.4) ** 2 > r * r * 1.4 ? P.bgMidD : Math.floor((py + 100) / 8) % 2 ? P.bgFarL : P.bgMid) : undefined)).disc(x + o - r * 0.4, cy - r * 0.45, r * 0.12, P.sunL); });
+  wrapX((o) => g.rect(o + 86, h - 58, 68, 5, P.bgMid).rect(o + 86, h - 58, 68, 1.5, P.bgFarL).rect(o + 198, h - 44, 114, 5, P.bgMid).rect(o + 198, h - 44, 114, 1.5, P.bgFarL));
+  return g;
+}
+
 const PAINT = {
+  factory(rng) { // works: smog bands, chimneys and tanks, giant spheres, chemical channel, trusses, pipes
+    return [
+      { name: 'moon', img: planet(false), y: -96, factor: 0.01, once: true },
+      { name: 'smog-far', img: lozenges(24, rng, 8, 14, 30), y: -58, factor: 0.03, drift: 0.09 },
+      { name: 'smog-near', img: lozenges(30, rng, 6, 26, 50), y: -100, factor: 0.06, drift: 0.2 },
+      { name: 'works', img: plant(86, rng), y: -86, factor: 0.08 },
+      { name: 'mega-tanks', img: megaTanks(96, rng), y: -94, factor: 0.2 },
+      { name: 'channel', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
+      { name: 'girders', img: girders(60, rng), y: -8, factor: 0.4 },
+      { name: 'pipes', img: pipeRow(44, rng), y: 28, factor: 0.58, fill: P.ink },
+    ];
+  },
   meadow(rng) { // garden: capsule clouds, pastel prisms, banded domes, lollipop trees
     return [
       { name: 'planet', img: planet(true), y: -96, factor: 0.01, once: true },

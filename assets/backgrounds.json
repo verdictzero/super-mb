@@ -205,6 +205,115 @@
    }
   ]
  },
+ "factory": {
+  "image": "bg-factory.png",
+  "sky": [
+   "#0a1038",
+   "#26349a",
+   "#8a5cd0"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "moon",
+    "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -192,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "smog-far",
+    "srcY": 140,
+    "w": 512,
+    "h": 48,
+    "y": -116,
+    "factor": 0.03,
+    "drift": 0.09,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "smog-near",
+    "srcY": 188,
+    "w": 512,
+    "h": 60,
+    "y": -200,
+    "factor": 0.06,
+    "drift": 0.2,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "works",
+    "srcY": 248,
+    "w": 512,
+    "h": 172,
+    "y": -172,
+    "factor": 0.08,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "mega-tanks",
+    "srcY": 420,
+    "w": 512,
+    "h": 192,
+    "y": -188,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "channel",
+    "srcY": 612,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "girders",
+    "srcY": 692,
+    "w": 512,
+    "h": 120,
+    "y": -16,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "pipes",
+    "srcY": 812,
+    "w": 512,
+    "h": 88,
+    "y": 56,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
  "dusk": {
   "image": "bg-dusk.png",
   "sky": [

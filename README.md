@@ -26,7 +26,7 @@ lollipop trees, lit skylines, stepped pyramids). The three themes are Garden, Ne
 | `assets/shaders/*.frag` | The CRT television shader passes |
 | `assets/tileset.tsj` | Tiled tileset (names, kinds, loop path and angles as tile properties) |
 | `assets/tileset.json` | Engine metadata: per-tile pixel masks, surface angles, autotile table, prefab stamps |
-| `levels/*.tmj` | Three hand-made levels and three generated ones, in Tiled JSON |
+| `levels/*.tmj` | Four hand-made levels and four generated ones, in Tiled JSON |
 | `demo/index.html` | Self-contained playable demo: open it in a browser |
 | `src/tileset/` | Tileset generator |
 | `src/level/` | Level builder, example levels, generator, Tiled import/export |
@@ -72,6 +72,24 @@ scrolls at its own fraction of the camera speed, and the water strip is line-scr
 moves slightly faster than the one above, which gives the receding-floor look of 16-bit backdrops.
 `backgrounds.json` lists each strip's position in the sheet, its vertical offset from the horizon,
 scroll factor(s) and drift, so another engine can reproduce the effect.
+
+## Factory zone
+
+The fourth theme (`factory`) is a chemical works: steel-plate ground with hazard-striped edges, a
+magenta chemical channel, smog bands, chimneys, giant storage spheres, trusses and pipe runs in
+the backdrop. It adds machines that do something:
+
+- **Conveyor belts** (`b.belt(n, dir)`): animated tiles that carry you along, with or against you.
+- **Acid vats** (`b.acid(n)`): animated liquid that kills on contact.
+- **Steam vents** (`b.vent(dx, phase)`): a launcher that only fires part of each cycle.
+- **Presses** (`b.crusher(dx, clearance, phase)`): slam down from a ceiling and stop just over a tile
+  above the floor, so they only catch you if you jump.
+
+and seven animated machinery props (eight frames each): meshing cogs, twin pistons, a boiler with a
+bubbling sight glass, a smokestack, a flywheel engine, a sloshing storage tank and a pipe run with
+a turning valve. In factory levels the generator adds conveyor, acid-vat, belt-into-vat, press-hall
+and vent-lift pieces to its tables. Animated tiles are consecutive ids with a `frames` count on the
+first; animated props list `frames` in `props.json`.
 
 ## Set pieces
 

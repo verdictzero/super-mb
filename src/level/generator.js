@@ -54,6 +54,21 @@ const BLOCK = {
   ledgeDown(b, r) { const h = r.int(1, 3); if (b.g + h > b.gMax) return false; b.flat(2).step(h).flat(r.int(4, 6)); },
   spikes(b, r, d) { if (d < 0.25) return false; const n = d > 0.7 ? 2 : 1; b.flat(3).spikes(n).flat(n + 4); },
   plankPit(b, r, d) { if (d < 0.35) return false; b.blocks('___', 0, 3).gems(3, 2, 3).gap(9).flat(4); },
+  // --- factory only (see FACTORY_W) ---
+  conveyor(b, r, d) { const n = r.int(6, 10), dir = r.chance(0.65) ? 1 : -1; b.flat(2).gems(n - 2, 1, 1); if (r.chance(d * 0.5)) b.flyer(n >> 1, 3); b.belt(n, dir).flat(2); },
+  acidVat(b, r, d) { const n = r.int(2, 2 + Math.round(d * 2)); b.flat(3).gems(n, 2, 0, 1.5).acid(n).flat(3); },
+  beltVat(b, r, d) { const n = r.int(2, 3); b.flat(2).belt(4, 1).gems(n, 2, 0, 1.5).acid(n).belt(4, 1).flat(2); }, // conveyors feeding an acid vat
+  press(b, r, d) { // corridor of presses: stay on the floor and they miss you
+    const n = r.int(8, 12);
+    if (b.g - 7 < b.gMin - 4) return false;
+    b.flat(2).overhang(n, 4, 2).gems(n - 2, 1, 1);
+    for (let k = 1; k + 2 < n; k += r.int(3, 4)) b.crusher(k, 4, r.int(0, 159));
+    b.flat(n + 2);
+  },
+  ventShelf(b, r) { // ride a steam vent up to a ledge
+    const h = r.int(4, 6); if (b.g - h < b.gMin) return false;
+    b.vent(2, r.int(0, 139)).flat(3).step(-h).gems(3, 1, 1).flat(r.int(9, 11));
+  },
   // --- layered and combined pieces ---
   upperDeck(b, r, d) { // plank steps up to a floating deck with its own pickups, hazards below
     const L = r.int(6, 10);
@@ -178,7 +193,8 @@ function fillZone(b, rng, table, weights, d, end) {
   let guard = 0;
   while (b.x < end && guard++ < 40) {
     const drift = b.g - b.base; // >0: ground is low, prefer rising pieces
-    const name = rng.weighted(Object.entries(weights).map(([n, w]) => [w * (RISES.has(n) ? clamp(1 + drift / 2, 0.1, 4) : FALLS.has(n) ? clamp(1 - drift / 2, 0.1, 4) : 1), n]));
+    const all = b.theme === 'factory' && FACTORY_W.has(table) ? { ...weights, ...FACTORY_W.get(table) } : weights;
+    const name = rng.weighted(Object.entries(all).map(([n, w]) => [w * (RISES.has(n) ? clamp(1 + drift / 2, 0.1, 4) : FALLS.has(n) ? clamp(1 - drift / 2, 0.1, 4) : 1), n]));
     const x0 = b.x;
     if (table[name](b, rng, d) === false) continue;
     b.log.push({ piece: name, x: x0 });
@@ -241,10 +257,14 @@ function tallLoop(b, r) {
 
 const FLOW_W = (d) => ({ rollers: 2, hill: 1.5, loop: 2, kicker: 1.2 + d, quarterPipe: 1, sDrop: 1.2, dropIn: 0.6, speedway: 0.8, doubleLoop: 1 + d, halfPipe: 1.5, wave: 1.5, loopKicker: 1 + d, rampJump: 1.2, skyway: 1.5 });
 const BLOCK_W = (d) => ({ stroll: 0.8, blockRow: 1.5, pipes: 1.5, pit: 1 + d, stairPit: 1 + d, ledgeUp: 1.2, ledgeDown: 1.2, spikes: d, plankPit: 1.5 * d, springShelf: 0.8, upperDeck: 2.5, brickTiers: 1.5, towers: 1.5, pipePit: 1 + d, bridge: 1.5, tunnel: 1.5, spikeTrench: 1.5 * d });
+// extra weights when the theme is the factory
+const FACTORY_W = new Map();
 const UPPER_W = { stroll: 1, blockRow: 2, pit: 2, bridge: 1.5, hump: 1.5, dip: 1.5, dash: 1.5, loop: 1 };
 // The basement only gets pieces that cannot kill you by falling and fit under a low roof.
 const UNDER = { stroll: BLOCK.stroll, hump: UPPER.hump, dip: UPPER.dip, dash: UPPER.dash, lowBlocks(b, r) { const n = r.int(3, 5); b.blocks('B?B?B'.slice(0, n), 4, 1).gems(n, 1, 1).flat(n + 2); }, hop(b) { b.flat(3).spikes(1).flat(4); } };
 const UNDER_W = { stroll: 1.5, hump: 1, dip: 1, dash: 1.5, lowBlocks: 2, hop: 1 };
+UPPER.conveyor = BLOCK.conveyor; UPPER.acidVat = BLOCK.acidVat; UNDER.conveyor = BLOCK.conveyor;
+FACTORY_W.set(BLOCK, { conveyor: 2.5, acidVat: 2, beltVat: 1.5, press: 2.5, ventShelf: 1.5 }).set(UPPER, { conveyor: 2.5, acidVat: 2 }).set(UNDER, { conveyor: 2.5 });
 const SLAB = 7, DECK = 3, BASEMENT = 18; // ground thickness under the main route / under upper tiers; rows from main route down to the basement floor
 
 // Tiers and basements attach at "pads": clean ten-tile flats the main route leaves for them.
@@ -318,7 +338,7 @@ function plateau(b, rng, o, d) {
 
 function build(ts, seed, o) {
   const rng = makeRng(seed);
-  const theme = o.theme || rng.pick(['meadow', 'cavern', 'dusk']);
+  const theme = o.theme || rng.pick(['meadow', 'cavern', 'dusk', 'factory']);
   const b = new LevelBuilder(ts, { name: `Seed ${o.seed}`, theme, height: HEIGHT, ground: START });
   b.log = []; b.depth = SLAB;
   b.flat(9);

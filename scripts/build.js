@@ -39,9 +39,12 @@ for (const theme of Object.keys(THEMES)) {
 }
 out('assets/backgrounds.json', JSON.stringify(bgMeta, null, 1));
 // big set pieces: one sheet per theme, laid out left to right
-const props = Object.values(buildProps()), propSheet = new Img(props.reduce((n, p) => n + p.w + 4, 0), Math.max(...props.map((p) => p.h))), propMeta = {};
+const props = Object.values(buildProps()), propSheet = new Img(props.reduce((n, p) => n + (p.w + 4) * p.frames.length, 0), Math.max(...props.map((p) => p.h))), propMeta = {};
 let px = 0;
-for (const p of props) { propSheet.blit(p.img, px, propSheet.h - p.h); propMeta[p.name] = { x: px, y: propSheet.h - p.h, w: p.w, h: p.h, sky: p.sky, sink: p.sink }; px += p.w + 4; }
+for (const p of props) { // animated props have their frames side by side
+  propMeta[p.name] = { x: px, y: propSheet.h - p.h, w: p.w, h: p.h, frames: p.frames.length, frameStep: p.w + 4, sky: p.sky, sink: p.sink };
+  for (const f of p.frames) { propSheet.blit(f, px, propSheet.h - p.h); px += p.w + 4; }
+}
 for (const theme of Object.keys(THEMES)) {
   out(`assets/props-${theme}.png`, encodePNG(propSheet.w, propSheet.h, toRGBA(propSheet, theme)));
   const rgba = toRGBA(propSheet, theme), sky = THEMES[theme].sky[1];
@@ -59,7 +62,7 @@ out('assets/tileset.json', json({
 }));
 
 const levels = EXAMPLES.map((e) => ({ id: e.id, level: e.build(ts) }));
-for (const [seed, flow, difficulty] of [[7, 0.2, 0.4], [21, 0.5, 0.6], [1984, 0.85, 0.8]]) levels.push({ id: `generated-${seed}`, level: generateLevel(ts, { seed, flow, difficulty }) });
+for (const [seed, flow, difficulty, theme] of [[7, 0.2, 0.4], [21, 0.5, 0.6], [1984, 0.85, 0.8], [303, 0.5, 0.6, 'factory']]) levels.push({ id: `generated-${seed}`, level: generateLevel(ts, { seed, flow, difficulty, theme }) });
 for (const { id, level } of levels) {
   const test = playtest(ts, level);
   console.log(`${id}: ${level.width}x${level.height}, bot ${test.ok ? `finished in ${test.frames} frames` : `FAILED (${test.reason} at x=${test.x})`}`);

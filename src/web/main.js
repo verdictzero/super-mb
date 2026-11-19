@@ -24,7 +24,7 @@ function canvasFrom(w, h, rgba) {
 const atlases = {};
 const atlasFor = (theme) => (atlases[theme] ||= canvasFrom(atlasIdx.w, atlasIdx.h, toRGBA(atlasIdx, theme)));
 const propImgs = buildProps(), propCanvas = {};
-const propFor = (theme, name) => (propCanvas[`${theme}/${name}`] ||= canvasFrom(propImgs[name].w, propImgs[name].h, toRGBA(propImgs[name].img, theme)));
+const propFor = (theme, name, f = 0) => (propCanvas[`${theme}/${name}/${f}`] ||= canvasFrom(propImgs[name].w, propImgs[name].h, toRGBA(propImgs[name].frames[f], theme)));
 const bgs = {};
 function bgFor(theme) {
   if (!bgs[theme]) { const bg = buildBackground(theme); bgs[theme] = { bg, canvas: new Map(bg.layers.map((l) => [l, canvasFrom(l.w, l.h, toRGBA(l.img, theme))])) }; }
@@ -97,10 +97,12 @@ function effects(sim, level) {
   if (trail.length > 8) trail.shift();
 }
 
-function drawTile(sheet, id, x, y) { if (id) g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, x, y, T, T); }
+let animTick = 0; // advances animated tiles (conveyors, acid)
+function drawTile(sheet, id, x, y) { if (id && ts.tiles[id].frames) id += animTick % ts.tiles[id].frames; if (id) g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, x, y, T, T); }
 
 function draw() {
   const { level, sim, cam } = state, p = sim.p, sheet = atlasFor(level.theme);
+  animTick = Math.floor((sim.frame + state.idle) / 5);
   cam.x += (Math.max(0, Math.min(level.width * T - VW, p.x - VW * 0.42)) - cam.x) * 0.2;
   cam.y += (Math.max(0, Math.min(level.height * T - VH, p.y - VH * 0.58)) - cam.y) * 0.22;
   const cx = Math.round(cam.x), cy = Math.round(cam.y);
@@ -110,7 +112,7 @@ function draw() {
   for (const q of level.props || []) { // big set pieces behind the terrain; sky ones bob gently
     const pr = propImgs[q.name];
     if (q.x + pr.w < cx || q.x > cx + VW) continue;
-    g.drawImage(propFor(level.theme, q.name), q.x - cx, q.y - cy + (pr.sky ? Math.round(Math.sin((sim.frame + state.idle) / 45 + q.x) * T * 0.2) : 0));
+    g.drawImage(propFor(level.theme, q.name, pr.frames.length > 1 ? Math.floor((sim.frame + state.idle) / 5 + q.x) % pr.frames.length : 0), q.x - cx, q.y - cy + (pr.sky ? Math.round(Math.sin((sim.frame + state.idle) / 45 + q.x) * T * 0.2) : 0));
   }
   const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T), front = [];
   for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
@@ -129,6 +131,12 @@ function draw() {
     if (o.type === 'walker') name = `walker_${(sim.frame >> 3) & 1}`;
     else if (o.type === 'flyer') name = `flyer_${(sim.frame >> 2) & 1}`;
     else if (o.type === 'checkpoint') name = o.on ? 'check_on' : 'check_off';
+    if (o.type === 'vent' && o.on) for (let k = 1; k <= 3; k++) drawTile(sheet, ts.names[`steam_${(k + (sim.frame >> 2)) % 3}`], o.x - cx, o.y - cy - k * T + ((sim.frame * 3) % T) - T / 2);
+    if (o.type === 'crusher') { // rod down from the ceiling, head at the end
+      const ext = Math.round(o.ext || 0);
+      for (let y = -T; y < ext; y += T) drawTile(sheet, ts.names.crusher_rod, o.x - cx + T / 2, o.y - cy + Math.min(y, ext - T));
+      drawTile(sheet, ts.names.crusher_head_0_0, o.x - cx, o.y - cy + ext - T); drawTile(sheet, ts.names.crusher_head_1_0, o.x - cx + T, o.y - cy + ext - T);
+    }
     if (name) drawTile(sheet, ts.names[name], Math.round(o.x) - cx, o.y - cy + (o.type === 'gem' ? Math.round((T / 16) * Math.sin(sim.frame / 12 + o.x / T)) : 0));
   }
   if (!p.dead) {

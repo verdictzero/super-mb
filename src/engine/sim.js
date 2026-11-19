@@ -15,6 +15,9 @@ export const PHYS = {
 };
 const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // sensor direction for floor / right wall / ceiling / left wall
 const RAD = Math.PI / 180;
+export const VENT_CYCLE = 140, VENT_ON = 50;
+// 0..1 extension of a press over its cycle: wait, slam, hold, retract
+export function crusherExt(f) { const t = ((f % 160) + 160) % 160; return t < 70 ? 0 : t < 78 ? (t - 70) / 8 : t < 104 ? 1 : 1 - (t - 104) / 56; }
 export const modeOf = (ang) => Math.floor((((ang + 45) % 360) + 360) % 360 / 90);
 
 export class Sim {
@@ -124,6 +127,7 @@ export class Sim {
       return;
     }
     const n = Math.max(1, Math.ceil(Math.abs(p.gsp) / (3 * S)));
+    this._belt = 0;
     for (let k = 0; k < n; k++) {
       const a = p.ang * RAD;
       p.x += (p.gsp * Math.cos(a)) / n; p.y -= (p.gsp * Math.sin(a)) / n;
@@ -138,7 +142,9 @@ export class Sim {
       p.x += dx * adj; p.y += dy * adj;
       p.ang = this._angleFrom(hit, mode);
       if (hit.t && hit.t.kind === 'hazard') return this._die('spikes');
+      this._belt = (hit.t && hit.t.belt) || 0;
     }
+    if (this._belt) p.x += this._belt * 1.5 * S; // conveyor carries you along
     if (modeOf(p.ang) !== 0 && Math.abs(p.gsp) < P.slip) { this._leave(); p.lock = 30; }
   }
   _leave() {
@@ -212,6 +218,16 @@ export class Sim {
     for (const o of this.objs) {
       if (!o.alive || Math.abs(o.x - p.x) > 400 * S) continue;
       if (o.type === 'flyer') o.y = o.y0 + Math.round(Math.sin((this.frame + o.x) / 22) * 0.9 * TILE);
+      if (o.type === 'vent') { // steam vent: a spring that only fires part of the time
+        o.on = (this.frame + o.phase) % VENT_CYCLE < VENT_ON;
+        if (o.on && Math.abs(p.x - (o.x + H)) < 13 * S && p.y > o.y - 3 * TILE && p.y < o.y + TILE) { p.ysp = -9.5 * S; p.xsp = (p.grounded ? p.gsp : p.xsp) * 0.2; p.grounded = false; p.jumping = false; p.ang = 0; }
+        continue;
+      }
+      if (o.type === 'crusher') { // press: slams down from the ceiling but stops short of the floor, so it only gets you if you jump
+        o.ext = crusherExt(this.frame + o.phase) * o.reach;
+        if (p.x + P.r > o.x && p.x - P.r < o.x + 2 * TILE && p.y - P.r < o.y + o.ext && p.y + P.r > o.y) this._die('crushed');
+        continue;
+      }
       if (o.type === 'checkpoint') { if (!o.on && Math.abs(p.x - (o.x + H)) < 13 * S && Math.abs(p.y - o.y) < 2 * TILE) { o.on = true; this.check = { x: o.x + H, y: o.y + TILE - PHYS.r - 1 }; this.events.push({ type: 'check', x: o.x + H, y: o.y }); } continue; }
       if (o.type === 'walker') {
         const f = o.vx < 0 ? -1 : 1;

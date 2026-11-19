@@ -63,8 +63,26 @@ function duskSpeedway(ts) {
   return b.decorate(makeRng(33)).finish();
 }
 
+function chemWorks(ts) {
+  const b = new LevelBuilder(ts, { name: 'Chem Works', theme: 'factory', height: 40, ground: 30 });
+  b.flat(10).gems(6, 1, 1).belt(8, 1).flat(3);                                  // first conveyor
+  b.gems(3, 2, 0, 1.5).acid(3).flat(4).pipe(2).flat(3);                         // acid vat
+  b.flat(2).overhang(11, 4, 2).gems(9, 1, 1).crusher(1, 4, 0).crusher(5, 4, 60).crusher(8, 4, 110).flat(13); // press hall
+  b.checkpoint(0).flat(2).belt(4, 1).gems(3, 2, 0, 1.5).acid(3).belt(4, 1).flat(3); // belts into a vat
+  b.vent(2, 0).flat(3).step(-5).gems(4, 1, 1).flat(10);                         // steam vent lift
+  b.blocks('B?B', 4, 1).enemy(3).flat(6).belt(7, -1).flat(3);                   // belt against you
+  b.flat(1).runUp(8).piece('loop14').gemsInLoop(14).flat(6);                    // tall loop
+  b.piece('sdrop').gemsOnLast().flat(3).acid(4).blocks('__', 2, -3).flat(4);    // vat with a plank over it
+  b.checkpoint(0).flat(2).vent(2, 40).flat(3).step(-6).flat(9).belt(6, 1).flat(2);
+  b.flat(2).overhang(9, 4, 2).crusher(1, 4, 30).crusher(5, 4, 100).flat(11);
+  b.flat(1).runUp(6).piece('qp_up').flat(12).stairs(3, 1).flat(1);
+  b.goal();
+  return b.decorate(makeRng(44)).finish();
+}
+
 export const EXAMPLES = [
   { id: 'meadow-run', build: meadowRun },
   { id: 'cavern-coil', build: cavernCoil },
   { id: 'dusk-speedway', build: duskSpeedway },
+  { id: 'chem-works', build: chemWorks },
 ];

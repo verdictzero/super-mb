@@ -29,7 +29,7 @@ export function buildTileset() {
   const keys = new Map();
   const add = (name, img, meta = {}) => {
     if (img.isEmpty() && !meta.mask) { names[name] = 0; return 0; }
-    const key = [img.d.join(''), meta.mask, meta.ang, meta.kind, meta.path, meta.block].join('|');
+    const key = [img.d.join(''), meta.mask, meta.ang, meta.kind, meta.path, meta.block, meta.belt, meta.frames].join('|');
     let id = keys.get(key);
     if (!id) { id = tiles.length; tiles.push({ id, name, img, ...meta }); keys.set(key, id); }
     names[name] = id;

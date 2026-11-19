@@ -5,7 +5,7 @@ import { TILE as T, S } from '../core/units.js';
 import { buildProps, PROP_SETS } from '../tileset/props.js';
 
 const GROUND = -1;
-const FLORA = { meadow: ['flower_0', 'flower_1', 'tuft', 'tuft', 'mushroom', 'rock'], cavern: ['crystal', 'crystal', 'mushroom', 'rock'], dusk: ['tuft', 'rock', 'flower_1', 'tuft'] }; // placeholder, resolved to an autotile in finish()
+const FLORA = { factory: ['barrel', 'barrel', 'cone', 'valve', 'rock'], meadow: ['flower_0', 'flower_1', 'tuft', 'tuft', 'mushroom', 'rock'], cavern: ['crystal', 'crystal', 'mushroom', 'rock'], dusk: ['tuft', 'rock', 'flower_1', 'tuft'] }; // placeholder, resolved to an autotile in finish()
 
 export class LevelBuilder {
   constructor(ts, { name = 'Untitled', theme = 'meadow', height = 30, ground = 22, ceiling = 0 } = {}) {
@@ -85,6 +85,12 @@ export class LevelBuilder {
   enemy(dx = 0) { return this.obj('walker', dx, 1); }
   flyer(dx = 0, up = 3) { return this.obj('flyer', dx, up); }          // hovers, bobbing up and down
   checkpoint(dx = 0) { return this.obj('checkpoint', dx, 1); }
+  // factory pieces: conveyor belt (dir 1 = carries right), acid vat, steam vent, press
+  belt(n, dir = 1) { const id = this.ts.names[dir > 0 ? 'belt_r_0' : 'belt_l_0']; for (let i = 0; i < n; i++) { this.set(this.x, this.g, id); this._fill(this.x, this.g + 1, this.depth - 1); this.surf[this.x] = null; this.x++; } return this; }
+  acid(n) { for (let i = 0; i < n; i++) { this.set(this.x, this.g, this.ts.names.acid_0); this._fill(this.x, this.g + 1, this.depth - 1); this.surf[this.x] = null; this.x++; } return this; }
+  vent(dx = 0, phase = 0) { return this.obj('vent', dx, 1, { phase }); }
+  // hangs from a ceiling `clearance` tiles above the ground and reaches down to just over a tile above the floor
+  crusher(dx = 0, clearance = 4, phase = 0) { this.objects.push({ type: 'crusher', x: (this.x + dx) * T, y: (this.g - clearance) * T, w: 2 * T, h: T, reach: Math.round((clearance - 1.3) * T), phase }); return this; }
   deco(name, dx = 0, up = 1) { this._col(this.x + dx); if (this.g - up >= 0) this.dec[this.x + dx][this.g - up] = this.ts.names[name]; return this; }
   // power: launch speed in 16px-grid units per frame; omit for the standard spring (about 11 tiles of height)
   spring(dx = 0, power) { return this.obj('spring', dx, 1, power ? { power } : {}); }

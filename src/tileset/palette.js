@@ -22,6 +22,7 @@ export const SLOTS = [
   'bgFar', 'bgFarL', 'bgMid', 'bgMidL', 'bgMidD', 'bgNear', 'bgNearD', 'bgWater', 'bgWaterL', 'bgWaterD', 'sun', 'sunL', 'bgCloud', 'bgCloudD',
   // underside of ground (ceilings) and the growths that hang from it
   'ceilL', 'ceil', 'ceilD',
+  'acidD', 'acid', 'acidL', // hazardous liquid
 ];
 export const P = Object.fromEntries(SLOTS.map((n, i) => [n, i]));
 
@@ -39,6 +40,7 @@ const base = {
   foeD: '#4a1a9a', foe: '#9a4aff', foeL: '#e0b0ff',
   yellow: '#fff03a', orange: '#ff8a1a',
   woodD: '#7a2a5a', wood: '#d0508a', woodL: '#ffa0c0',
+  acidD: '#128a2a', acid: '#4cf040', acidL: '#d4ffb0',
 };
 
 export const THEMES = {
@@ -73,6 +75,24 @@ export const THEMES = {
       bgWater: '#102a90', bgWaterL: '#18f0e0', bgWaterD: '#0a1858', sun: '#18f0e0', sunL: '#f0ffff', bgCloud: '#2a2a80', bgCloudD: '#181860',
       ceilL: '#fff03a', ceil: '#f88018', ceilD: '#782808',
       white: '#e8f0ff', cloudD: '#6878c8',
+    },
+  },
+  factory: {
+    label: 'Factory', sky: ['#0a1038', '#26349a', '#8a5cd0'],
+    colors: { ...base,
+      dirtX: '#182240', dirtD: '#2e3e6c', dirt: '#48609c', dirtL: '#94b4e8',
+      grassL: '#fffac8', grass: '#ffd018', grassD: '#22202e',
+      rimL: '#c4dcff', rimD: '#080e20',
+      brickD: '#a84614', brick: '#f08228', brickL: '#ffca7c',
+      stoneD: '#3e4860', stone: '#7888a8', stoneL: '#c8d4f0',
+      pipeD: '#088870', pipe: '#20d0a0', pipeL: '#b4ffe4',
+      bushD: '#186e78', bush: '#28b0b0', bushL: '#a4f0e0',
+      hillD: '#16244a', hill: '#28407a',
+      bgFar: '#1a2a6c', bgFarL: '#3a52b4', bgMid: '#2a4280', bgMidL: '#f0c020', bgMidD: '#16244c', bgNear: '#101a3c', bgNearD: '#080e26',
+      bgWater: '#c020c4', bgWaterL: '#ff94f0', bgWaterD: '#6a0a8c', sun: '#ffe060', sunL: '#fff8d0', bgCloud: '#5c62ac', bgCloudD: '#3a4284',
+      ceilL: '#ff8ab0', ceil: '#d0246c', ceilD: '#5a0a3a',
+      acidD: '#8a0a9c', acid: '#f440e4', acidL: '#ffc4ff',
+      white: '#eaf0ff', cloudD: '#8090c8',
     },
   },
   dusk: {
