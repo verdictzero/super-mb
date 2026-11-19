@@ -119,6 +119,14 @@ function bgHill() {
   for (const [x, y] of [[30, 16], [46, 24], [24, 32], [56, 36], [40, 40]]) g.disc(x, y, 1.5, P.hillD);
   return g;
 }
+function hanging(seed) { // stalactites / roots that hang under a ceiling (decor only)
+  const t = T(), spikes = [[[1, 9], [6, 5], [11, 12], [14.5, 4]], [[2.5, 6], [8, 14], [13, 8]], [[0.5, 4], [4.5, 11], [9.5, 6], [13.5, 10]]][seed];
+  for (const [x, len] of spikes) {
+    const w = 1.2 + len / 5;
+    t.poly([[x - w, -1], [x + w, -1], [x + 0.3, len]], P.ceil).poly([[x - w, -1], [x - w + 1, -1], [x + 0.1, len - 1]], P.ceilL).poly([[x + w - 1, -1], [x + w, -1], [x + 0.3, len]], P.ceilD);
+  }
+  return t.rect(0, 0, 16, 1, P.ceilD);
+}
 function hero(roll) {
   const t = T().disc(7.5, 7.5, 7.6, P.ink).disc(7.5, 7.5, 6.5, P.hero);
   t.map((x, y, c) => (c === P.hero && (x - 4.5) ** 2 + (y - 4.5) ** 2 > 60 ? P.heroD : undefined)); // crescent shadow
@@ -170,5 +178,6 @@ export function handTiles() {
   slice('bush', bush(), { kind: 'decor' });
   slice('bghill', bgHill(), { kind: 'decor' });
   slice('goal_flag', g.flag, { kind: 'decor' }); // 2x2 banner
+  for (let i = 0; i < 3; i++) add(`hang_${i}`, hanging(i), { kind: 'decor' });
   return out;
 }

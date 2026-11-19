@@ -106,6 +106,7 @@ export class LevelBuilder {
     return true;
   }
   decorate(rng, density = 1) { // clouds and distant hills come from the parallax background
+    this.hang = { rng, chance: (this.theme === 'cavern' ? 0.45 : 0.2) * density }; // growths under ceilings, placed in finish()
     const w = this.cols.length;
     const flatRun = (x, n) => { for (let i = 0; i < n; i++) if (this.surf[x + i] == null || this.surf[x + i] !== this.surf[x]) return false; return true; };
     for (let x = 2; x < w - 6; x++) {
@@ -123,6 +124,9 @@ export class LevelBuilder {
       const id = this.cols[Math.min(w - 1, Math.max(0, x))][y];
       return id === GROUND || (id > 0 && ts.tiles[id].kind === 'ground');
     };
+    if (this.hang) for (let x = 0; x < w; x++) for (let y = 1; y < h; y++) { // hang decor under flat undersides of plain ground
+      if (this.cols[x][y - 1] === GROUND && !this.cols[x][y] && !this.dec[x][y] && this.hang.rng.chance(this.hang.chance)) this.dec[x][y] = ts.names[`hang_${this.hang.rng.int(0, 2)}`];
+    }
     const terrain = new Uint16Array(w * h), decor = new Uint16Array(w * h);
     for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) {
       let id = this.cols[x][y];

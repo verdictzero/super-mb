@@ -32,6 +32,9 @@ for (const [x, y] of [[3, 9], [11, 1], [8, 15], [14, 6]]) { // pebbles (16px gri
 // turf depth variation along the surface (tile-periodic)
 const TUFT = Array.from({ length: T }, (_, x) => (1 + 0.6 * Math.sin((2 * Math.PI * 3 * x) / T) + 0.4 * Math.sin((2 * Math.PI * 7 * x) / T + 1)) * S);
 
+// depth of the ceiling crust along the surface: blunt teeth, tile-periodic
+const CRUST = Array.from({ length: T }, (_, x) => { const u = ((x / T) * 4) % 1; return (0.6 + 2.6 * (1 - Math.abs(u - 0.5) * 2) ** 1.5 + 0.8 * Math.sin((2 * Math.PI * 5 * x) / T)) * S; });
+
 export function renderTerrain(w, h, solidFn) {
   const W = w + 2 * M, H = h + 2 * M;
   const G = new Uint8Array(W * H);
@@ -61,9 +64,13 @@ export function renderTerrain(w, h, solidFn) {
     if (d < Infinity) {
       const [, ny] = normal(x, y);
       const t = Math.min(1, Math.max(0, (-ny - 0.35) / 0.4)); // 1 = faces up, 0 = wall/ceiling
+      const u = Math.min(1, Math.max(0, (ny - 0.35) / 0.4));  // 1 = faces down (a ceiling)
       if (t > 0) { // turf, thinning out as the surface steepens
         const depth = 1 + (2 + TUFT[x & MK] / S) * t;
         if (d <= 1) c = P.grassL; else if (d <= depth) c = P.grass; else if (d <= depth + 1) c = P.grassD;
+      } else if (u > 0) { // ceiling crust: dark lip, toothed band, bright inner seam; thins toward walls
+        const depth = 1.4 + (1.2 + CRUST[x & MK] / S) * u;
+        if (d <= 1) c = P.ceilD; else if (d <= depth) c = P.ceil; else if (d <= depth + 0.9) c = P.ceilL; else if (d <= depth + 1.8) c = P.dirtD;
       } else if (d <= 1) c = P.rimD; else if (d <= 2.3) c = P.rimL; else if (d <= 3.2) c = P.dirtD;
     }
     img.set(x, y, c);
