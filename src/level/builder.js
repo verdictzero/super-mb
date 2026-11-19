@@ -2,6 +2,7 @@
 // the procedural generator both use it, so anything the generator can produce can also
 // be written by hand (see examples.js).
 import { TILE as T, S } from '../core/units.js';
+import { buildProps, PROP_SETS } from '../tileset/props.js';
 
 const GROUND = -1;
 const FLORA = { meadow: ['flower_0', 'flower_1', 'tuft', 'tuft', 'mushroom', 'rock'], cavern: ['crystal', 'crystal', 'mushroom', 'rock'], dusk: ['tuft', 'rock', 'flower_1', 'tuft'] }; // placeholder, resolved to an autotile in finish()
@@ -12,6 +13,7 @@ export class LevelBuilder {
     this.cols = []; this.dec = [];
     this.x = 0; this.g = ground; this.g0 = ground;
     this.objects = [];
+    this.props = []; // big background set pieces: { name, x, y } in pixels (top-left)
     this.surf = []; // per column: surface y in px (for decoration), or null over pits / special pieces
   }
   _col(x) { while (this.cols.length <= x) { this.cols.push(new Int16Array(this.height)); this.dec.push(new Int16Array(this.height)); this.surf.push(null); } return this.cols[x]; }
@@ -110,6 +112,7 @@ export class LevelBuilder {
     return true;
   }
   decorate(rng, density = 1) { // clouds and distant hills come from the parallax background
+    this._scenery(rng);
     this.hang = { rng, chance: (this.theme === 'cavern' ? 0.45 : 0.2) * density }; // growths under ceilings, placed in finish()
     const w = this.cols.length;
     const flatRun = (x, n) => { for (let i = 0; i < n; i++) if (this.surf[x + i] == null || this.surf[x + i] !== this.surf[x]) return false; return true; };
@@ -118,6 +121,20 @@ export class LevelBuilder {
       if (rng.chance(0.16 * density) && this.surf[x] != null) this._stamp(rng.pick(FLORA[this.theme] || FLORA.meadow), 1, 1, x, this.surf[x] / T - 1);
     }
     return this;
+  }
+  // one big set piece every few tiles: ground props stand on flat ground, sky props float above it
+  _scenery(rng) {
+    const props = buildProps(), set = PROP_SETS[this.theme] || PROP_SETS.meadow, w = this.cols.length;
+    let last = null;
+    for (let x = rng.int(4, 8); x < w - 14; x += rng.int(5, 10)) {
+      let name = rng.pick(set);
+      if (name === last) name = rng.pick(set);
+      const p = props[name], ground = this.surf[x];
+      if (p.sky) { const base = ground ?? this.g0 * T; this.props.push({ name, x: x * T, y: Math.max((this.ceiling + 1) * T, base - p.h - rng.int(4, 8) * T) }); }
+      else if (ground != null) this.props.push({ name, x: Math.round(x * T + T / 2 - p.w / 2), y: ground - p.h + p.sink });
+      else continue;
+      last = name;
+    }
   }
   finish() {
     const { ts, height: h } = this;
@@ -149,6 +166,6 @@ export class LevelBuilder {
       }
       terrain[y * w + x] = id; decor[y * w + x] = this.dec[x][y];
     }
-    return { name: this.name, theme: this.theme, groundRow: this.g0, width: w, height: h, tile: T, terrain, decor, objects: this.objects, spawn: { x: 3.5 * T, y: this.g0 * T - T / 2 } };
+    return { name: this.name, theme: this.theme, groundRow: this.g0, width: w, height: h, tile: T, terrain, decor, objects: this.objects, props: this.props, spawn: { x: 3.5 * T, y: this.g0 * T - T / 2 } };
   }
 }

@@ -22,6 +22,7 @@ lollipop trees, lit skylines, stepped pyramids). The three themes are Garden, Ne
 | --- | --- |
 | `assets/tileset-{meadow,cavern,dusk}.png` | The tile sheet in three themes (32 columns, 32px tiles, 349 tiles) |
 | `assets/bg-{meadow,cavern,dusk}.png`, `assets/backgrounds.json` | Parallax background strips and their scroll table |
+| `assets/props-{meadow,cavern,dusk}.png`, `assets/props.json` | Big background set pieces and their rectangles |
 | `assets/tileset.tsj` | Tiled tileset (names, kinds, loop path and angles as tile properties) |
 | `assets/tileset.json` | Engine metadata: per-tile pixel masks, surface angles, autotile table, prefab stamps |
 | `levels/*.tmj` | Three hand-made levels and three generated ones, in Tiled JSON |
@@ -70,6 +71,18 @@ scrolls at its own fraction of the camera speed, and the water strip is line-scr
 moves slightly faster than the one above, which gives the receding-floor look of 16-bit backdrops.
 `backgrounds.json` lists each strip's position in the sheet, its vertical offset from the horizon,
 scroll factor(s) and drift, so another engine can reproduce the effect.
+
+## Set pieces
+
+`src/tileset/props.js` draws fourteen large scenery props (two to eight tiles across): ferris wheel,
+striped arch, giant lollipop tree, palm, totem, signal pylon, crystal cluster, waterfall, cog,
+orb on a pedestal, broken column, and three that float (balloon, blimp, hoop). They stand in the
+level plane behind the terrain with no collision, painted in the backdrop colours so they read as
+scenery. `LevelBuilder.decorate()` scatters one every five to ten tiles from the theme's set, and
+levels carry them as `level.props` (`prop` objects in the Tiled export).
+
+The parallax stack also has giant far landmarks: floating islands with waterfalls and a ringed
+planet (Garden), colossal half-rings, spires and a moon (Neon), palm islets and an airship (Sunset).
 
 ## Loops
 

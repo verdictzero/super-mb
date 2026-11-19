@@ -7,6 +7,7 @@ import { buildTileset, atlasImage, toRGBA } from '../src/tileset/tileset.js';
 import { THEMES, SLOTS } from '../src/tileset/palette.js';
 import { buildBackground, HORIZON_ABOVE_GROUND } from '../src/tileset/background.js';
 import { Img } from '../src/tileset/img.js';
+import { buildProps, PROP_SETS } from '../src/tileset/props.js';
 import { encodePNG } from '../src/core/png.js';
 import { EXAMPLES } from '../src/level/examples.js';
 import { generateLevel } from '../src/level/generator.js';
@@ -36,6 +37,17 @@ for (const theme of Object.keys(THEMES)) {
   out(`assets/bg-${theme}.png`, encodePNG(sheet.w, sheet.h, toRGBA(sheet, theme)));
 }
 out('assets/backgrounds.json', JSON.stringify(bgMeta, null, 1));
+// big set pieces: one sheet per theme, laid out left to right
+const props = Object.values(buildProps()), propSheet = new Img(props.reduce((n, p) => n + p.w + 4, 0), Math.max(...props.map((p) => p.h))), propMeta = {};
+let px = 0;
+for (const p of props) { propSheet.blit(p.img, px, propSheet.h - p.h); propMeta[p.name] = { x: px, y: propSheet.h - p.h, w: p.w, h: p.h, sky: p.sky, sink: p.sink }; px += p.w + 4; }
+for (const theme of Object.keys(THEMES)) {
+  out(`assets/props-${theme}.png`, encodePNG(propSheet.w, propSheet.h, toRGBA(propSheet, theme)));
+  const rgba = toRGBA(propSheet, theme), sky = THEMES[theme].sky[1];
+  for (let i = 0; i < rgba.length; i += 4) if (!rgba[i + 3]) { rgba[i] = parseInt(sky.slice(1, 3), 16); rgba[i + 1] = parseInt(sky.slice(3, 5), 16); rgba[i + 2] = parseInt(sky.slice(5, 7), 16); rgba[i + 3] = 255; }
+  out(`docs/props-${theme}.png`, encodePNG(propSheet.w, propSheet.h, rgba));
+}
+out('assets/props.json', JSON.stringify({ props: propMeta, sets: PROP_SETS }, null, 1));
 out('assets/tileset.tsj', json(tilesetToTiled(ts, 'tileset-meadow.png', atlas.w, atlas.h)));
 // engine-side metadata: collision masks, angles, autotile table, prefab stamps
 out('assets/tileset.json', json({

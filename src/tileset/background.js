@@ -75,12 +75,47 @@ function streaks(h, rng, count) { // thin horizontal cloud bars
   return g;
 }
 
+// --- giant far-off landmarks ---
+function floatingIslands(h, rng) { // garden: islands with waterfalls, hanging in the distance
+  const g = new Img(W, h, S);
+  for (const [x, y, w] of [[40, 34, 34], [150, 54, 46], [226, 26, 22]]) wrapX((o) => {
+    g.poly([[x + o - w, y], [x + o + w, y], [x + o + w * 0.2, y + w * 0.9], [x + o - w * 0.3, y + w * 0.7]], P.bgFar).poly([[x + o, y], [x + o + w, y], [x + o + w * 0.2, y + w * 0.9]], P.bgNear);
+    g.rect(x + o - w, y - 4, 2 * w, 5, P.bgMid).rect(x + o - w, y - 4, 2 * w, 1.5, P.bgMidL).rect(x + o + w * 0.45, y, 4, h - y, P.bgWaterL).rect(x + o + w * 0.45 + 1.5, y, 1.5, h - y, P.bgWater);
+    for (let k = 0; k < 3; k++) g.rect(x + o - w * 0.6 + k * w * 0.5 - 0.5, y - 12 - (k % 2) * 4, 1.5, 9 + (k % 2) * 4, P.bgNearD).disc(x + o - w * 0.6 + k * w * 0.5, y - 14 - (k % 2) * 4, 4.5, P.bgMid).disc(x + o - w * 0.6 + k * w * 0.5 - 1.2, y - 15.5 - (k % 2) * 4, 1.2, P.bgMidL);
+  });
+  return g;
+}
+function megaStructures(h, rng) { // neon: colossal half-rings and spires
+  const g = new Img(W, h, S);
+  for (const [x, r] of [[70, 58], [200, 40]]) wrapX((o) => g.map((px, py) => { const d = Math.hypot(px - x - o, py - h); return d <= r && d >= r - 7 ? (Math.floor((Math.atan2(py - h, px - x - o) + 7) / 0.22) % 2 ? P.bgMidL : P.bgFarL) : undefined; }));
+  for (const [x, w, th] of [[128, 12, h - 4], [20, 8, h * 0.7], [238, 9, h * 0.8]]) wrapX((o) => { g.poly([[x + o - w, h], [x + o, h - th], [x + o + w, h]], P.bgMid).poly([[x + o, h], [x + o, h - th], [x + o + w, h]], P.bgMidD); for (let y = h - th + 14; y < h; y += 9) g.rect(x + o - 1, y, 2, 4, P.sun); });
+  return g;
+}
+function airships(h, rng) { // sunset: palm islets on the water and an airship
+  const g = new Img(W, h, S);
+  for (const [x, w] of [[50, 30], [190, 20]]) wrapX((o) => {
+    g.map((px, py) => ((px - x - o) ** 2 / (w * w) + (py - h) ** 2 / 100 <= 1 ? P.bgMidD : undefined));
+    for (const [dx, th] of [[-w * 0.4, 30], [w * 0.2, 42]]) { const tx = x + o + dx, ty = h - 6 - th; g.poly([[tx - 1.5, h - 6], [tx + 2, ty], [tx + 4, ty], [tx + 1.5, h - 6]], P.bgNearD); for (const [fx, fy] of [[-14, 4], [-9, -7], [3, -9], [14, -4], [15, 7], [-13, 11]]) g.poly([[tx + 3, ty], [tx + 3 + fx * 0.5, ty + fy - 3], [tx + 3 + fx, ty + fy + 3]], P.bgNear); }
+  });
+  wrapX((o) => g.map((px, py) => (((px - 120 - o) / 34) ** 2 + ((py - 16) / 10) ** 2 <= 1 ? (py > 19 ? P.bgMidD : P.bgMidL) : undefined)).poly([[150 + o, 16], [162 + o, 6], [162 + o, 26]], P.bgMid).rect(110 + o, 26, 18, 5, P.bgNearD).rect(113 + o, 27.5, 3, 2, P.sun).rect(120 + o, 27.5, 3, 2, P.sun));
+  return g;
+}
+function planet(ringed) { // huge body low in the sky
+  const g = new Img(W, 70, S), cx = 60, cy = 34, r = 26;
+  g.map((x, y) => ((x - cx) ** 2 + (y - cy) ** 2 <= r * r ? ((x - cx + 10) ** 2 + (y - cy + 10) ** 2 > r * r * 1.25 ? P.bgFar : Math.floor((y + (x - cx) * 0.25 + 100) / 6) % 2 ? P.bgFarL : P.bgCloud) : undefined));
+  if (ringed) g.map((x, y, c) => { const e = ((x - cx) / 44) ** 2 + ((y - cy - (x - cx) * 0.2) / 8) ** 2; return e <= 1 && e >= 0.62 && !(c && y < cy + (x - cx) * 0.2) ? P.sun : undefined; });
+  else for (const [x, y, q] of [[50, 26, 5], [68, 40, 7], [56, 46, 3]]) g.disc(x, y, q, P.bgFar);
+  return g.disc(cx - 11, cy - 12, 3, P.white);
+}
+
 const PAINT = {
   meadow(rng) { // garden: capsule clouds, pastel prisms, banded domes, lollipop trees
     return [
+      { name: 'planet', img: planet(true), y: -96, factor: 0.01, once: true },
       { name: 'clouds-far', img: lozenges(24, rng, 7, 10, 22), y: -62, factor: 0.03, drift: 0.06 },
       { name: 'clouds-near', img: lozenges(30, rng, 5, 22, 44), y: -98, factor: 0.06, drift: 0.14 },
       { name: 'prisms', img: prisms(70, rng, 9, P.bgFarL, P.bgFar, 28, 62), y: -70, factor: 0.1 },
+      { name: 'floating-islands', img: floatingIslands(84, rng), y: -84, factor: 0.2 },
       { name: 'water', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
       { name: 'domes', img: domes(52, rng, 7, P.bgMid, P.bgMidL, P.white, 16, 34), y: 6, factor: 0.4 },
       { name: 'trees', img: lollipops(44, rng, 11, P.bgNearD, P.bgNear, P.bgNearD, P.bgWaterL), y: 26, factor: 0.58, fill: P.ink },
@@ -90,7 +125,9 @@ const PAINT = {
     const hang = new Img(W, 60, S);
     for (let i = 0; i < 14; i++) { const x = rng.int(0, W), w = rng.int(6, 13), h = rng.int(18, 54); wrapX((o) => hang.poly([[x + o - w, -1], [x + o, -1], [x + o, h]], P.bgFarL).poly([[x + o, -1], [x + o + w, -1], [x + o, h]], P.bgMidD)); }
     return [
+      { name: 'moon', img: planet(false), y: -92, factor: 0.01, once: true },
       { name: 'skyline', img: towers(150, rng, 11), y: -150, factor: 0.06 },
+      { name: 'mega-structures', img: megaStructures(96, rng), y: -96, factor: 0.2 },
       { name: 'hanging-prisms', img: hang, y: 0, factor: 0.16, pin: 'top' },
       { name: 'lake', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
       { name: 'spheres', img: domes(56, rng, 6, P.bgMid, P.bgMidL, P.sunL, 14, 30), y: 4, factor: 0.4 },
@@ -105,6 +142,7 @@ const PAINT = {
       { name: 'streaks-far', img: streaks(40, rng, 14), y: -74, factor: 0.03, drift: 0.05 },
       { name: 'streaks-near', img: streaks(30, rng, 9), y: -100, factor: 0.07, drift: 0.12 },
       { name: 'ziggurats', img: ziggurats(70, rng, 4, P.bgFarL, P.bgFar), y: -70, factor: 0.1 },
+      { name: 'islets-airship', img: airships(64, rng), y: -62, factor: 0.2 },
       { name: 'sea', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
       { name: 'domes', img: domes(52, rng, 6, P.bgMid, P.bgMidL, P.sunL, 16, 32), y: 6, factor: 0.4 },
       { name: 'trees', img: lollipops(44, rng, 9, P.bgNearD, P.bgNear, P.bgNearD, P.bgMidL), y: 26, factor: 0.58, fill: P.ink },

@@ -8,6 +8,7 @@ import { renderLevel, objectTile } from '../level/render.js';
 import { Sim } from '../engine/sim.js';
 import { Bot } from '../engine/bot.js';
 import { TILE as T } from '../core/units.js';
+import { buildProps } from '../tileset/props.js';
 
 const $ = (id) => document.getElementById(id);
 const ts = buildTileset();
@@ -21,6 +22,8 @@ function canvasFrom(w, h, rgba) {
 }
 const atlases = {};
 const atlasFor = (theme) => (atlases[theme] ||= canvasFrom(atlasIdx.w, atlasIdx.h, toRGBA(atlasIdx, theme)));
+const propImgs = buildProps(), propCanvas = {};
+const propFor = (theme, name) => (propCanvas[`${theme}/${name}`] ||= canvasFrom(propImgs[name].w, propImgs[name].h, toRGBA(propImgs[name].img, theme)));
 const bgs = {};
 function bgFor(theme) {
   if (!bgs[theme]) { const bg = buildBackground(theme); bgs[theme] = { bg, canvas: new Map(bg.layers.map((l) => [l, canvasFrom(l.w, l.h, toRGBA(l.img, theme))])) }; }
@@ -97,6 +100,11 @@ function draw() {
   const bands = skyBands(level.theme), bh = Math.ceil(VH / bands.length); // banded sky, no smooth gradient
   bands.forEach((c, i) => { g.fillStyle = `rgb(${c})`; g.fillRect(0, i * bh, VW, bh); });
   drawBackground(level, cx, cy, sim.frame + state.idle);
+  for (const q of level.props || []) { // big set pieces behind the terrain; sky ones bob gently
+    const pr = propImgs[q.name];
+    if (q.x + pr.w < cx || q.x > cx + VW) continue;
+    g.drawImage(propFor(level.theme, q.name), q.x - cx, q.y - cy + (pr.sky ? Math.round(Math.sin((sim.frame + state.idle) / 45 + q.x) * T * 0.2) : 0));
+  }
   const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T), front = [];
   for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;

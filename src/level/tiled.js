@@ -25,6 +25,7 @@ export function levelToTiled(ts, level, tilesetSource = '../assets/tileset.tsj')
     if (extra.length) out.properties = extra.map(([k, v]) => ({ name: k, type: typeof v === 'number' ? 'float' : 'string', value: v }));
     return out;
   });
+  for (const q of level.props || []) objects.push({ id: oid++, name: q.name, type: 'prop', x: q.x, y: q.y, width: 0, height: 0, point: true, rotation: 0, visible: true });
   objects.push({ id: oid++, name: 'spawn', type: 'spawn', x: level.spawn.x, y: level.spawn.y, width: 0, height: 0, point: true, rotation: 0, visible: true });
   return {
     type: 'map', version: '1.10', tiledversion: '1.10.2', orientation: 'orthogonal', renderorder: 'right-down', infinite: false,
@@ -38,9 +39,10 @@ export function levelToTiled(ts, level, tilesetSource = '../assets/tileset.tsj')
 export function levelFromTiled(map) {
   const prop = (list, k) => ((list || []).find((p) => p.name === k) || {}).value;
   const layer = (n) => map.layers.find((l) => l.name === n);
-  const level = { name: prop(map.properties, 'name') || 'Untitled', theme: prop(map.properties, 'theme') || 'meadow', width: map.width, height: map.height, tile: TILE, terrain: Uint16Array.from(layer('terrain').data), decor: Uint16Array.from(layer('decor').data), objects: [], spawn: { x: 56, y: 100 } };
+  const level = { name: prop(map.properties, 'name') || 'Untitled', theme: prop(map.properties, 'theme') || 'meadow', width: map.width, height: map.height, tile: TILE, terrain: Uint16Array.from(layer('terrain').data), decor: Uint16Array.from(layer('decor').data), objects: [], props: [], spawn: { x: 56, y: 100 } };
   for (const o of layer('objects').objects) {
     if (o.type === 'spawn') { level.spawn = { x: o.x, y: o.y }; continue; }
+    if (o.type === 'prop') { level.props.push({ name: o.name, x: o.x, y: o.y }); continue; }
     const out = { type: o.type, x: o.x, y: o.gid ? o.y - o.height : o.y, w: o.width, h: o.height };
     for (const p of o.properties || []) out[p.name] = p.value;
     level.objects.push(out);

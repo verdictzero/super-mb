@@ -1,6 +1,7 @@
 // Flat RGBA render of a whole level (used for PNG previews and the minimap).
 import { themeRGBA, skyBands } from '../tileset/palette.js';
 import { TILE as T } from '../core/units.js';
+import { buildProps } from '../tileset/props.js';
 import { buildBackground, layoutBackground, HORIZON_ABOVE_GROUND } from '../tileset/background.js';
 
 export const OBJECT_TILE = { gem: 'gem', spring: 'spring', walker: 'walker_0', flyer: 'flyer_0', checkpoint: 'check_off' };
@@ -37,6 +38,14 @@ export function renderLevel(ts, level, theme = level.theme) {
       const o = (Y * W + X) * 4; out[o] = pal[c * 4]; out[o + 1] = pal[c * 4 + 1]; out[o + 2] = pal[c * 4 + 2];
     }
   };
+  const props = buildProps();
+  for (const q of level.props || []) { // set pieces, behind everything in the level plane
+    const im = props[q.name].img;
+    for (let j = 0; j < im.h; j++) for (let i = 0; i < im.w; i++) {
+      const c = im.d[j * im.w + i], X = q.x + i, Y = q.y + j;
+      if (c && X >= 0 && Y >= 0 && X < W && Y < H) { const o = (Y * W + X) * 4; out[o] = pal[c * 4]; out[o + 1] = pal[c * 4 + 1]; out[o + 2] = pal[c * 4 + 2]; }
+    }
+  }
   for (const layer of [level.decor, level.terrain]) for (let y = 0; y < level.height; y++) for (let x = 0; x < level.width; x++) blit(layer[y * level.width + x], x * T, y * T);
   for (const o of level.objects) { const n = objectTile(o); if (n) blit(ts.names[n], o.x, o.y); }
   blit(ts.names.hero, level.spawn.x - T / 2, level.spawn.y - T / 2);

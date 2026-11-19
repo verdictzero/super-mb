@@ -1,0 +1,154 @@
+{
+ "props": {
+  "totem": {
+   "x": 0,
+   "y": 112,
+   "w": 64,
+   "h": 176,
+   "sky": false,
+   "sink": 6
+  },
+  "arch": {
+   "x": 68,
+   "y": 88,
+   "w": 224,
+   "h": 200,
+   "sky": false,
+   "sink": 6
+  },
+  "bigtree": {
+   "x": 296,
+   "y": 48,
+   "w": 144,
+   "h": 240,
+   "sky": false,
+   "sink": 6
+  },
+  "palm": {
+   "x": 444,
+   "y": 80,
+   "w": 160,
+   "h": 208,
+   "sky": false,
+   "sink": 6
+  },
+  "ferris": {
+   "x": 608,
+   "y": 0,
+   "w": 272,
+   "h": 288,
+   "sky": false,
+   "sink": 6
+  },
+  "pylon": {
+   "x": 884,
+   "y": 16,
+   "w": 112,
+   "h": 272,
+   "sky": false,
+   "sink": 6
+  },
+  "crystals": {
+   "x": 1000,
+   "y": 88,
+   "w": 176,
+   "h": 200,
+   "sky": false,
+   "sink": 6
+  },
+  "waterfall": {
+   "x": 1180,
+   "y": 80,
+   "w": 112,
+   "h": 208,
+   "sky": false,
+   "sink": 12
+  },
+  "balloon": {
+   "x": 1296,
+   "y": 88,
+   "w": 128,
+   "h": 200,
+   "sky": true,
+   "sink": 6
+  },
+  "blimp": {
+   "x": 1428,
+   "y": 176,
+   "w": 248,
+   "h": 112,
+   "sky": true,
+   "sink": 6
+  },
+  "gear": {
+   "x": 1680,
+   "y": 164,
+   "w": 208,
+   "h": 124,
+   "sky": false,
+   "sink": 0
+  },
+  "orb": {
+   "x": 1892,
+   "y": 96,
+   "w": 112,
+   "h": 192,
+   "sky": false,
+   "sink": 6
+  },
+  "hoop": {
+   "x": 2008,
+   "y": 144,
+   "w": 144,
+   "h": 144,
+   "sky": true,
+   "sink": 6
+  },
+  "column": {
+   "x": 2156,
+   "y": 80,
+   "w": 80,
+   "h": 208,
+   "sky": false,
+   "sink": 6
+  }
+ },
+ "sets": {
+  "meadow": [
+   "bigtree",
+   "bigtree",
+   "arch",
+   "totem",
+   "balloon",
+   "waterfall",
+   "orb",
+   "hoop",
+   "palm",
+   "ferris"
+  ],
+  "cavern": [
+   "pylon",
+   "pylon",
+   "crystals",
+   "crystals",
+   "gear",
+   "column",
+   "ferris",
+   "orb",
+   "hoop",
+   "blimp"
+  ],
+  "dusk": [
+   "palm",
+   "palm",
+   "totem",
+   "arch",
+   "blimp",
+   "balloon",
+   "ferris",
+   "column",
+   "gear",
+   "orb"
+  ]
+ }
+}

@@ -9,8 +9,20 @@
   "horizonAboveGround": 90,
   "layers": [
    {
-    "name": "clouds-far",
+    "name": "planet",
     "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -192,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-far",
+    "srcY": 140,
     "w": 512,
     "h": 48,
     "y": -124,
@@ -22,7 +34,7 @@
    },
    {
     "name": "clouds-near",
-    "srcY": 48,
+    "srcY": 188,
     "w": 512,
     "h": 60,
     "y": -196,
@@ -34,7 +46,7 @@
    },
    {
     "name": "prisms",
-    "srcY": 108,
+    "srcY": 248,
     "w": 512,
     "h": 140,
     "y": -140,
@@ -45,8 +57,20 @@
     "pinTop": false
    },
    {
+    "name": "floating-islands",
+    "srcY": 388,
+    "w": 512,
+    "h": 168,
+    "y": -168,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
     "name": "water",
-    "srcY": 248,
+    "srcY": 556,
     "w": 512,
     "h": 80,
     "y": 0,
@@ -59,7 +83,7 @@
    },
    {
     "name": "domes",
-    "srcY": 328,
+    "srcY": 636,
     "w": 512,
     "h": 104,
     "y": 12,
@@ -71,7 +95,7 @@
    },
    {
     "name": "trees",
-    "srcY": 432,
+    "srcY": 740,
     "w": 512,
     "h": 88,
     "y": 52,
@@ -94,8 +118,20 @@
   "horizonAboveGround": 90,
   "layers": [
    {
-    "name": "skyline",
+    "name": "moon",
     "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -184,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "skyline",
+    "srcY": 140,
     "w": 512,
     "h": 300,
     "y": -300,
@@ -106,8 +142,20 @@
     "pinTop": false
    },
    {
+    "name": "mega-structures",
+    "srcY": 440,
+    "w": 512,
+    "h": 192,
+    "y": -192,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
     "name": "hanging-prisms",
-    "srcY": 300,
+    "srcY": 632,
     "w": 512,
     "h": 120,
     "y": 0,
@@ -119,7 +167,7 @@
    },
    {
     "name": "lake",
-    "srcY": 420,
+    "srcY": 752,
     "w": 512,
     "h": 80,
     "y": 0,
@@ -132,7 +180,7 @@
    },
    {
     "name": "spheres",
-    "srcY": 500,
+    "srcY": 832,
     "w": 512,
     "h": 112,
     "y": 8,
@@ -144,7 +192,7 @@
    },
    {
     "name": "prisms",
-    "srcY": 612,
+    "srcY": 944,
     "w": 512,
     "h": 88,
     "y": 52,
@@ -215,8 +263,20 @@
     "pinTop": false
    },
    {
-    "name": "sea",
+    "name": "islets-airship",
     "srcY": 440,
+    "w": 512,
+    "h": 128,
+    "y": -124,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "sea",
+    "srcY": 568,
     "w": 512,
     "h": 80,
     "y": 0,
@@ -229,7 +289,7 @@
    },
    {
     "name": "domes",
-    "srcY": 520,
+    "srcY": 648,
     "w": 512,
     "h": 104,
     "y": 12,
@@ -241,7 +301,7 @@
    },
    {
     "name": "trees",
-    "srcY": 624,
+    "srcY": 752,
     "w": 512,
     "h": 88,
     "y": 52,
