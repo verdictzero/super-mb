@@ -21,7 +21,10 @@ header p, section > p { margin: 6px 0 0; color: var(--muted); max-width: 65ch; }
 section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 canvas { image-rendering: pixelated; display: block; }
 .screen { background: var(--screen); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
-#game { width: 100%; height: auto; border-radius: 4px; touch-action: none; }
+#game, #crt { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 4px; touch-action: none; }
+#crt { image-rendering: auto; border-radius: 14px; }
+.tv { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px 12px; align-items: end; }
+.tv button, .tv select { width: 100%; }
 .hud { font: 500 12px/1.4 var(--mono); color: #d9d4f2; display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 4px; font-variant-numeric: tabular-nums; }
 .hud b { color: #ffc27a; font-weight: 500; }
 .mini { position: relative; overflow: hidden; border-radius: 4px; }
@@ -60,7 +63,8 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
 
   <section aria-label="Game">
     <div class="screen">
-      <canvas id="game" width="800" height="450" tabindex="0" aria-label="Game screen"></canvas>
+      <canvas id="crt" tabindex="0" aria-label="Game screen, CRT filter"></canvas>
+      <canvas id="game" width="800" height="450" tabindex="0" aria-label="Game screen" hidden></canvas>
       <div class="hud"><span id="hudName"></span><span>gems <b id="hudGems">0</b></span><span>speed <b id="hudSpeed">0.0</b></span><span>angle <b id="hudAngle">0</b>°</span><span>path <b id="hudPath">A</b></span><span id="hudState"></span></div>
       <div class="mini"><canvas id="mini"></canvas><div id="miniMark"></div></div>
     </div>
@@ -72,6 +76,16 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
       <button id="botBtn" aria-pressed="true">Bot is playing</button>
       <button id="colBtn" aria-pressed="false">Show collision</button>
       <button id="restart">Restart</button>
+    </div>
+    <div class="panel tv" aria-label="CRT television filter">
+      <button id="crtBtn" aria-pressed="true">CRT filter on</button>
+      <label for="crtMask">Phosphor mask<select id="crtMask"><option value="0">Aperture grille</option><option value="1">Slot mask</option><option value="2">Dot triads</option></select></label>
+      <label for="crtCurve"><span>Curvature <output id="crtCurveOut">0.6</output></span><input id="crtCurve" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+      <label for="crtRf"><span>RF interference <output id="crtRfOut">0.35</output></span><input id="crtRf" type="range" min="0" max="1" step="0.05" value="0.35"></label>
+      <label for="crtComp"><span>Composite colour <output id="crtCompOut">0.8</output></span><input id="crtComp" type="range" min="0" max="1" step="0.05" value="0.8"></label>
+      <label for="crtScan"><span>Scanlines <output id="crtScanOut">0.7</output></span><input id="crtScan" type="range" min="0" max="1" step="0.05" value="0.7"></label>
+      <label for="crtGlow"><span>Glow and afterglow <output id="crtGlowOut">0.6</output></span><input id="crtGlow" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+      <button id="degauss">Degauss</button>
     </div>
     <p>Play with <kbd>←</kbd> <kbd>→</kbd> and <kbd>Space</kbd> (or the buttons on a phone). Pressing a key takes over from the bot. Hit a booster before a loop: the big one needs more than running speed. Lamps are checkpoints: touch one and you restart from it.</p>
   </section>

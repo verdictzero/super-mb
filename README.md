@@ -23,6 +23,7 @@ lollipop trees, lit skylines, stepped pyramids). The three themes are Garden, Ne
 | `assets/tileset-{meadow,cavern,dusk}.png` | The tile sheet in three themes (32 columns, 32px tiles, 349 tiles) |
 | `assets/bg-{meadow,cavern,dusk}.png`, `assets/backgrounds.json` | Parallax background strips and their scroll table |
 | `assets/props-{meadow,cavern,dusk}.png`, `assets/props.json` | Big background set pieces and their rectangles |
+| `assets/shaders/*.frag` | The CRT television shader passes |
 | `assets/tileset.tsj` | Tiled tileset (names, kinds, loop path and angles as tile properties) |
 | `assets/tileset.json` | Engine metadata: per-tile pixel masks, surface angles, autotile table, prefab stamps |
 | `levels/*.tmj` | Three hand-made levels and three generated ones, in Tiled JSON |
@@ -83,6 +84,25 @@ levels carry them as `level.props` (`prop` objects in the Tiled export).
 
 The parallax stack also has giant far landmarks: floating islands with waterfalls and a ringed
 planet (Garden), colossal half-rings, spires and a moon (Neon), palm islets and an airship (Sunset).
+
+## CRT shader
+
+`src/shader/crt.js` is a four-pass CRT television filter in GLSL ES 1.00 (also written out as plain
+files in `assets/shaders/`); `src/web/crt.js` is a small WebGL1 runner for it.
+
+1. **Signal**: the frame is encoded as a composite signal (luma plus a chroma subcarrier whose phase
+   flips each line and frame) and decoded again, which produces colour bleed, dot crawl, cross-colour
+   fringes and edge ringing. RF faults are added to the signal first: snow, impulse sparkles, a
+   herringbone beat pattern, a ghost echo, per-line jitter and weave, and a rolling hum bar.
+2. **Phosphor**: per-channel afterglow, red decaying slowest.
+3. **Blur**: half-size gaussian for halation.
+4. **Tube**: barrel curvature, convergence error growing toward the edges, gaussian beam scanlines
+   that fatten with brightness, interlaced field offset, RGB subpixel mask (aperture grille, slot
+   mask or dot triads), halation, corner dimming, a colour purity blotch, field flicker, raised
+   black level, glass glare and a degauss wobble.
+
+The curvature is normalised so the picture's corners land exactly on the output corners: the bulge
+is cropped as overscan at the edges and no border ever shows.
 
 ## Loops
 

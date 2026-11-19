@@ -8,6 +8,7 @@ import { THEMES, SLOTS } from '../src/tileset/palette.js';
 import { buildBackground, HORIZON_ABOVE_GROUND } from '../src/tileset/background.js';
 import { Img } from '../src/tileset/img.js';
 import { buildProps, PROP_SETS } from '../src/tileset/props.js';
+import { VERT, SIGNAL_FRAG, PHOSPHOR_FRAG, BLUR_FRAG, TUBE_FRAG } from '../src/shader/crt.js';
 import { encodePNG } from '../src/core/png.js';
 import { EXAMPLES } from '../src/level/examples.js';
 import { generateLevel } from '../src/level/generator.js';
@@ -66,6 +67,9 @@ for (const { id, level } of levels) {
   const im = renderLevel(ts, level);
   out(`docs/${id}.png`, encodePNG(im.w, im.h, im.rgba));
 }
+
+// the CRT shader as plain GLSL files, for use outside the demo
+for (const [name, text] of Object.entries({ 'crt.vert': VERT, 'crt-1-signal.frag': SIGNAL_FRAG, 'crt-2-phosphor.frag': PHOSPHOR_FRAG, 'crt-3-blur.frag': BLUR_FRAG, 'crt-4-tube.frag': TUBE_FRAG })) out(`assets/shaders/${name}`, text.trimStart() + '\n');
 
 // playable demo: one self-contained HTML file
 const bundle = await build({ entryPoints: [path.join(root, 'src/web/main.js')], bundle: true, format: 'iife', minify: true, write: false, target: 'es2020' });

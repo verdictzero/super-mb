@@ -9,6 +9,7 @@ import { Sim } from '../engine/sim.js';
 import { Bot } from '../engine/bot.js';
 import { TILE as T } from '../core/units.js';
 import { buildProps } from '../tileset/props.js';
+import { CRT } from './crt.js';
 
 const $ = (id) => document.getElementById(id);
 const ts = buildTileset();
@@ -176,8 +177,25 @@ function frame(now) {
   acc = Math.min(100, acc + now - last); last = now;
   while (acc >= 1000 / 60) { tick(); acc -= 1000 / 60; }
   draw();
+  if (crt && state.crtOn) crt.render(crtSettings());
   requestAnimationFrame(frame);
 }
+
+// ---- CRT filter -------------------------------------------------------------------
+let crt = null;
+try { crt = new CRT($('crt'), game); } catch (err) { console.warn('CRT filter off:', err.message); }
+state.crtOn = !!crt;
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const crtSettings = () => ({ curve: +$('crtCurve').value, rf: +$('crtRf').value, composite: +$('crtComp').value, scan: +$('crtScan').value, glow: +$('crtGlow').value, persist: 0.2 + 0.6 * +$('crtGlow').value, mask: 0.85, maskType: +$('crtMask').value, calm });
+function setCrt(on) {
+  state.crtOn = on && !!crt;
+  $('crt').hidden = !state.crtOn; game.hidden = state.crtOn;
+  $('crtBtn').setAttribute('aria-pressed', state.crtOn); $('crtBtn').textContent = crt ? (state.crtOn ? 'CRT filter on' : 'CRT filter off') : 'CRT needs WebGL';
+}
+setCrt(true);
+$('crtBtn').onclick = () => setCrt(!state.crtOn);
+$('degauss').onclick = () => { if (crt) crt.degauss = 1.6; };
+for (const id of ['crtCurve', 'crtRf', 'crtComp', 'crtScan', 'crtGlow']) $(id).addEventListener('input', () => { $(`${id}Out`).textContent = $(id).value; });
 
 // ---- input ----------------------------------------------------------------------
 function setBot(on) { state.useBot = on; state.bot = new Bot(); $('botBtn').setAttribute('aria-pressed', on); $('botBtn').textContent = on ? 'Bot is playing' : 'Let the bot play'; }
@@ -200,7 +218,7 @@ for (const [id, k] of [['padL', 'left'], ['padR', 'right'], ['padJ', 'jump']]) {
 $('botBtn').onclick = () => setBot(!state.useBot);
 $('colBtn').onclick = () => { state.showCol = !state.showCol; $('colBtn').setAttribute('aria-pressed', state.showCol); drawSheet(); };
 $('restart').onclick = () => { state.sim.reset(); state.bot = new Bot(); };
-EXAMPLES.forEach((e, i) => { $(`lv${i}`).onclick = () => { load(e.build(ts)); showPieces(null); game.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }; });
+EXAMPLES.forEach((e, i) => { $(`lv${i}`).onclick = () => { load(e.build(ts)); showPieces(null); (state.crtOn ? $('crt') : game).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }; });
 
 // ---- generator ------------------------------------------------------------------
 const FLOW_PIECES = new Set(['rollers', 'hill', 'loop', 'kicker', 'quarterPipe', 'sDrop', 'dropIn', 'speedway', 'doubleLoop', 'halfPipe', 'wave', 'loopKicker', 'rampJump', 'skyway']);
@@ -215,7 +233,7 @@ function generate() {
   const level = generateLevel(ts, { seed: Math.max(1, +$('seed').value || 1), flow: +$('flow').value, difficulty: +$('diff').value, length: +$('len').value, theme: $('theme').value || null });
   load(level); showPieces(level);
 }
-$('gen').onclick = () => { generate(); game.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
+$('gen').onclick = () => { generate(); (state.crtOn ? $('crt') : game).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
 $('rand').onclick = () => { $('seed').value = 1 + Math.floor(Math.random() * 99999); generate(); };
 for (const [id, out] of [['flow', 'flowOut'], ['diff', 'diffOut'], ['len', 'lenOut']]) $(id).oninput = () => { $(out).textContent = $(id).value; };
 
