@@ -85,6 +85,31 @@ into the ground on landing, kicks on jumps, boosts and bounces, and the head lea
 lags a little when rising or falling. This is drawing only (`updateMorph` in `src/web/main.js`);
 the collision shape stays a circle.
 
+## Godot port
+
+`godot/` is a Godot 4.3 project (GL Compatibility renderer) that plays the game with the same
+physics and look. Open the folder in the Godot editor and press Play.
+
+| File | What |
+| --- | --- |
+| `godot/scripts/sim.gd` | The simulation, ported line for line from `src/engine/sim.js` |
+| `godot/scripts/bot.gd` | The look-ahead bot, for auto-play |
+| `godot/scripts/world.gd` | Draws sky bands, parallax (including the line-scrolled strip), set pieces, animated tiles, machines, objects and particles |
+| `godot/scripts/player_view.gd` | The head-in-a-sphere player with squash and stretch, drawn smooth at twice the art resolution |
+| `godot/scripts/main.gd` | Loading, input, the viewport chain for the CRT shader, HUD |
+| `godot/shaders/crt_*.gdshader` | The four CRT passes in Godot's shading language |
+| `godot/assets/` | Baked by `npm run build`: tile sheets, backdrops, set pieces, the head, all tables, and 12 levels as JSON |
+
+Keys: arrows or A/D to run, Space/Up/Z to jump, R restart, N/P next/previous level, B bot auto-play,
+C CRT on/off, M mask type, G degauss.
+
+What is not ported: the art generator and the level generator stay in JavaScript and act as the
+asset pipeline. `npm run build` writes everything the Godot project reads, so new art or levels
+reach Godot by rebuilding.
+
+Status: the GDScript has been syntax-checked with gdtoolkit, but the project has not been run in
+Godot, and the shaders have not been compiled. Expect to fix small things on first open.
+
 ## Factory zone
 
 The fourth theme (`factory`) is a chemical works: steel-plate ground with hazard-striped edges, a

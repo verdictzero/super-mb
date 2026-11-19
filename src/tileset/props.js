@@ -14,6 +14,38 @@ function ball(g, cx, cy, r, a, b, band = 6) {
 }
 const line = (g, x0, y0, x1, y1, w, c) => { const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, nx = (-dy / l) * w / 2, ny = (dx / l) * w / 2; return g.poly([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]], c); };
 
+// A palm: a tapering, ringed trunk that leans as it rises, a crown of arching fronds (dark ones
+// behind, light ones in front), each frond a curved rib with leaflets hanging from it, and coconuts.
+export function drawPalm(g, bx, by, hgt, o = {}) {
+  const k = hgt / 92, c = { lean: 20 * k, trunkA: P.bgNear, trunkB: P.bgNearD, shine: P.bgFarL, leaf: P.bgMid, leafD: P.bgMidD, rib: P.bgMidL, nut: P.sun, nutL: P.sunL, ...o };
+  const at = (t) => [bx + c.lean * t * t - c.lean * 0.25 * Math.sin(Math.PI * t), by - hgt * t];
+  const N = Math.max(7, Math.round(hgt / 6.5));
+  g.poly([[bx - 9 * k, by], [bx - 5 * k, by - 6 * k], [bx + 5 * k, by - 6 * k], [bx + 9 * k, by]], c.trunkB); // flared foot
+  for (let i = 0; i < N; i++) {
+    const [xa, ya] = at(i / N), [xb, yb] = at((i + 1) / N), wa = (5.2 - 2.4 * (i / N)) * k, wb = (5.2 - 2.4 * ((i + 1) / N)) * k;
+    g.poly([[xa - wa - 0.6 * k, ya], [xb - wb, yb], [xb + wb, yb], [xa + wa + 0.6 * k, ya]], i % 2 ? c.trunkA : c.trunkB); // each ring flares at its base
+    g.poly([[xa - wa, ya], [xb - wb, yb], [xb - wb + 1.3 * k, yb], [xa - wa + 1.5 * k, ya]], c.shine);
+  }
+  const [cx, cy] = at(1);
+  const frond = (ang, len, col, ribCol) => {
+    const tx = cx + Math.cos(ang) * len, ty = cy + Math.sin(ang) * len * 0.5 + len * 0.42;       // tips droop
+    const mx = cx + Math.cos(ang) * len * 0.55, my = cy + Math.sin(ang) * len * 0.6 - len * 0.34; // ribs arch up first
+    const side = Math.cos(ang) >= 0 ? 1 : -1, M = 14, pts = [[cx, cy]];
+    for (let j = 1; j <= M; j++) { const t = j / M, u = 1 - t; pts.push([u * u * cx + 2 * u * t * mx + t * t * tx, u * u * cy + 2 * u * t * my + t * t * ty]); }
+    for (let j = 1; j <= M; j++) { // leaflets: longest in the middle of the frond, swept toward the tip
+      const [x0, y0] = pts[j - 1], [x1, y1] = pts[j], L = len * 0.4 * Math.sin(Math.PI * Math.min(1, (j / M) * 1.08)) ** 0.75 + 1.5 * k;
+      g.poly([[x0, y0], [x1, y1], [x1 + side * L * 0.32, y1 + L]], col);
+      g.poly([[x0, y0], [x1, y1], [x1 - side * L * 0.1, y1 - L * 0.28]], col);
+    }
+    for (let j = 1; j <= M; j++) line(g, pts[j - 1][0], pts[j - 1][1], pts[j][0], pts[j][1], Math.max(0.8, 1.5 * k * (1 - j / M) + 0.6), ribCol);
+  };
+  const len = hgt * 0.5;
+  for (const a of [-2.55, -0.6, -1.57]) frond(a, len * 0.92, c.leafD, c.leaf);     // back
+  for (const a of [-3.3, -2.05, -1.05, 0.18]) frond(a, len, c.leaf, c.rib);        // front
+  if (c.nut) g.disc(cx - 3 * k, cy + 4 * k, 3.2 * k, c.trunkB).disc(cx + 3.5 * k, cy + 4.5 * k, 3.2 * k, c.nut).disc(cx + 0.5 * k, cy + 6 * k, 3 * k, c.nut).disc(cx + 2.6 * k, cy + 3.6 * k, 1 * k, c.nutL);
+  return g;
+}
+
 const PAINT = {
   totem() { // stacked glossy faces
     const g = new Img(32, 88, S);
@@ -43,15 +75,7 @@ const PAINT = {
     ball(g, 12, 60, 9, P.bgMid, P.bgMidL, 4); ball(g, 60, 55, 10, P.bgMid, P.bgMidL, 4);
     return ball(g, 36, 34, 31, P.bgMid, P.bgMidL, 7).outline(P.bgNearD);
   },
-  palm() {
-    const g = new Img(80, 104, S);
-    for (let i = 0; i < 12; i++) { const t = i / 12, x = 30 + 14 * t * t, y = 104 - t * 76; g.rect(x - 3.5 + t, y - 7, 7 - t * 2, 7, i % 2 ? P.bgNear : P.bgNearD); }
-    const tx = 44, ty = 28;
-    for (const [dx, dy, droop] of [[-36, -6, 18], [-26, -22, 8], [-4, -28, 2], [20, -24, 8], [34, -8, 18], [-30, 10, 16], [28, 10, 16]]) {
-      g.poly([[tx, ty], [tx + dx * 0.5, ty + dy - 5], [tx + dx, ty + dy + droop]], P.bgMid).poly([[tx, ty], [tx + dx, ty + dy + droop], [tx + dx * 0.45, ty + dy * 0.5 + 6]], P.bgMidD);
-    }
-    return g.disc(41, 30, 3, P.sun).disc(47, 31, 3, P.sunL).outline(P.bgNearD);
-  },
+  palm() { return drawPalm(new Img(112, 132, S), 44, 132, 92).outline(P.bgNearD); },
   ferris() { // big wheel on an A-frame
     const g = new Img(136, 144, S), cx = 67.5, cy = 62, R = 54;
     line(g, cx, cy, 30, 144, 5, P.bgNearD); line(g, cx, cy, 105, 144, 5, P.bgNearD); line(g, 42, 118, 93, 118, 3, P.bgNearD);

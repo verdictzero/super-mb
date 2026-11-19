@@ -1,0 +1,426 @@
+{
+ "meadow": {
+  "image": "bg-meadow.png",
+  "sky": [
+   "#1a4ae0",
+   "#3ab8ff",
+   "#ffc8f0"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "planet",
+    "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -192,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-far",
+    "srcY": 140,
+    "w": 512,
+    "h": 48,
+    "y": -124,
+    "factor": 0.03,
+    "drift": 0.06,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-near",
+    "srcY": 188,
+    "w": 512,
+    "h": 60,
+    "y": -196,
+    "factor": 0.06,
+    "drift": 0.14,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "prisms",
+    "srcY": 248,
+    "w": 512,
+    "h": 140,
+    "y": -140,
+    "factor": 0.1,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "floating-islands",
+    "srcY": 388,
+    "w": 512,
+    "h": 168,
+    "y": -168,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "water",
+    "srcY": 556,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "domes",
+    "srcY": 636,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "trees",
+    "srcY": 740,
+    "w": 512,
+    "h": 88,
+    "y": 52,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
+ "cavern": {
+  "image": "bg-cavern.png",
+  "sky": [
+   "#04031a",
+   "#18084a",
+   "#5a1890"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "moon",
+    "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -184,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "skyline",
+    "srcY": 140,
+    "w": 512,
+    "h": 300,
+    "y": -300,
+    "factor": 0.06,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "mega-structures",
+    "srcY": 440,
+    "w": 512,
+    "h": 192,
+    "y": -192,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "hanging-prisms",
+    "srcY": 632,
+    "w": 512,
+    "h": 120,
+    "y": 0,
+    "factor": 0.16,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": true
+   },
+   {
+    "name": "lake",
+    "srcY": 752,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "spheres",
+    "srcY": 832,
+    "w": 512,
+    "h": 112,
+    "y": 8,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "prisms",
+    "srcY": 944,
+    "w": 512,
+    "h": 88,
+    "y": 52,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
+ "factory": {
+  "image": "bg-factory.png",
+  "sky": [
+   "#0a1038",
+   "#26349a",
+   "#8a5cd0"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "moon",
+    "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -192,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "smog-far",
+    "srcY": 140,
+    "w": 512,
+    "h": 48,
+    "y": -116,
+    "factor": 0.03,
+    "drift": 0.09,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "smog-near",
+    "srcY": 188,
+    "w": 512,
+    "h": 60,
+    "y": -200,
+    "factor": 0.06,
+    "drift": 0.2,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "works",
+    "srcY": 248,
+    "w": 512,
+    "h": 172,
+    "y": -172,
+    "factor": 0.08,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "mega-tanks",
+    "srcY": 420,
+    "w": 512,
+    "h": 192,
+    "y": -188,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "channel",
+    "srcY": 612,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "girders",
+    "srcY": 692,
+    "w": 512,
+    "h": 120,
+    "y": -16,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "pipes",
+    "srcY": 812,
+    "w": 512,
+    "h": 88,
+    "y": 56,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
+ "dusk": {
+  "image": "bg-dusk.png",
+  "sky": [
+   "#38188c",
+   "#f03c8c",
+   "#ffc23a"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "sun",
+    "srcY": 0,
+    "w": 512,
+    "h": 160,
+    "y": -208,
+    "factor": 0,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "streaks-far",
+    "srcY": 160,
+    "w": 512,
+    "h": 80,
+    "y": -148,
+    "factor": 0.03,
+    "drift": 0.05,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "streaks-near",
+    "srcY": 240,
+    "w": 512,
+    "h": 60,
+    "y": -200,
+    "factor": 0.07,
+    "drift": 0.12,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "ziggurats",
+    "srcY": 300,
+    "w": 512,
+    "h": 140,
+    "y": -140,
+    "factor": 0.1,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "islets-airship",
+    "srcY": 440,
+    "w": 512,
+    "h": 128,
+    "y": -124,
+    "factor": 0.2,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "sea",
+    "srcY": 568,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "domes",
+    "srcY": 648,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "trees",
+    "srcY": 752,
+    "w": 512,
+    "h": 88,
+    "y": 52,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ }
+}

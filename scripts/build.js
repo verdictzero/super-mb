@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { buildTileset, atlasImage, toRGBA } from '../src/tileset/tileset.js';
-import { THEMES, SLOTS } from '../src/tileset/palette.js';
+import { THEMES, SLOTS, skyBands } from '../src/tileset/palette.js';
 import { buildBackground, HORIZON_ABOVE_GROUND } from '../src/tileset/background.js';
 import { Img } from '../src/tileset/img.js';
 import { buildProps, PROP_SETS } from '../src/tileset/props.js';
@@ -56,7 +56,7 @@ out('assets/tileset.tsj', json(tilesetToTiled(ts, 'tileset-meadow.png', atlas.w,
 // engine-side metadata: collision masks, angles, autotile table, prefab stamps
 out('assets/tileset.json', json({
   tileSize: ts.tileSize, columns: ts.columns,
-  tiles: ts.tiles.map((t) => t && { id: t.id, name: t.name, kind: t.kind, block: t.block, path: t.path, mask: t.mask, ang: t.ang }),
+  tiles: ts.tiles.map((t) => t && { id: t.id, name: t.name, kind: t.kind, block: t.block, path: t.path, belt: t.belt, frames: t.frames, mask: t.mask, ang: t.ang }),
   names: ts.names, ground: Array.from(ts.ground),
   prefabs: Object.fromEntries(Object.entries(ts.prefabs).map(([k, p]) => [k, { w: p.w, h: p.h, colOff: p.colOff, rowOff: p.rowOff, width: p.width, dy: p.dy, cliff: p.cliff, cells: p.cells, objects: p.objects }])),
 }));
@@ -69,6 +69,20 @@ for (const { id, level } of levels) {
   out(`levels/${id}.tmj`, json(levelToTiled(ts, level)));
   const im = renderLevel(ts, level, level.theme, level.height > 40 ? 2 : 1);
   out(`docs/${id}.png`, encodePNG(im.w, im.h, im.rgba));
+}
+
+// ---- Godot project assets (godot/assets): the same sheets and levels, plus the tables the port reads
+{
+  const G = 'godot/assets';
+  for (const f of fs.readdirSync(path.join(root, 'assets'))) if (/\.(png|json)$/.test(f) && f !== 'tileset.tsj') out(`${G}/${f}`, fs.readFileSync(path.join(root, 'assets', f)));
+  out(`${G}/themes.json`, json(Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, { label: t.label, sky: skyBands(k), colors: t.colors }]))));
+  const index = [];
+  const more = [[11, 0.3, 0.4, 'meadow'], [12, 0.7, 0.6, 'cavern'], [13, 0.5, 0.7, 'dusk'], [14, 0.6, 0.6, 'factory']].map(([seed, flow, difficulty, theme]) => ({ id: `generated-${seed}`, level: generateLevel(ts, { seed, flow, difficulty, theme }) }));
+  for (const { id, level } of [...levels, ...more]) {
+    index.push({ id, name: level.name, theme: level.theme });
+    out(`${G}/levels/${id}.json`, json({ name: level.name, theme: level.theme, width: level.width, height: level.height, terrain: Array.from(level.terrain), decor: Array.from(level.decor), objects: level.objects, props: level.props || [], spawn: level.spawn }));
+  }
+  out(`${G}/levels/index.json`, json(index));
 }
 
 // the CRT shader as plain GLSL files, for use outside the demo

@@ -10,6 +10,7 @@ import { Img } from './img.js';
 import { P } from './palette.js';
 import { S } from '../core/units.js';
 import { makeRng } from '../core/rng.js';
+import { drawPalm } from './props.js';
 
 const W = 256; // design units; every strip is W*S pixels wide and wraps
 const wrapX = (fn) => { for (const o of [-W, 0, W]) fn(o); };
@@ -95,7 +96,7 @@ function airships(h, rng) { // sunset: palm islets on the water and an airship
   const g = new Img(W, h, S);
   for (const [x, w] of [[50, 30], [190, 20]]) wrapX((o) => {
     g.map((px, py) => ((px - x - o) ** 2 / (w * w) + (py - h) ** 2 / 100 <= 1 ? P.bgMidD : undefined));
-    for (const [dx, th] of [[-w * 0.4, 30], [w * 0.2, 42]]) { const tx = x + o + dx, ty = h - 6 - th; g.poly([[tx - 1.5, h - 6], [tx + 2, ty], [tx + 4, ty], [tx + 1.5, h - 6]], P.bgNearD); for (const [fx, fy] of [[-14, 4], [-9, -7], [3, -9], [14, -4], [15, 7], [-13, 11]]) g.poly([[tx + 3, ty], [tx + 3 + fx * 0.5, ty + fy - 3], [tx + 3 + fx, ty + fy + 3]], P.bgNear); }
+    for (const [dx, th, lean] of [[-w * 0.45, 34, -5], [w * 0.15, 46, 7], [w * 0.55, 26, 4]]) drawPalm(g, x + o + dx, h - 5, th, { lean, trunkA: P.bgNearD, trunkB: P.bgNearD, shine: P.bgNear, leaf: P.bgNear, leafD: P.bgNearD, rib: P.bgMidD, nut: 0 });
   });
   wrapX((o) => g.map((px, py) => (((px - 120 - o) / 34) ** 2 + ((py - 16) / 10) ** 2 <= 1 ? (py > 19 ? P.bgMidD : P.bgMidL) : undefined)).poly([[150 + o, 16], [162 + o, 6], [162 + o, 26]], P.bgMid).rect(110 + o, 26, 18, 5, P.bgNearD).rect(113 + o, 27.5, 3, 2, P.sun).rect(120 + o, 27.5, 3, 2, P.sun));
   return g;
