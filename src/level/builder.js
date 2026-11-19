@@ -14,16 +14,29 @@ export class LevelBuilder {
     this.x = 0; this.g = ground; this.g0 = ground;
     this.objects = [];
     this.props = []; // big background set pieces: { name, x, y } in pixels (top-left)
-    this.surf = []; // per column: surface y in px (for decoration), or null over pits / special pieces
+    this.surf = []; // per column: y (px) of the flat surface most recently laid there, or null
+    this.tops = []; // every flat surface cell laid, on any tier: [column, row]
+    this.depth = Infinity; // how many tiles of ground go under a surface (Infinity = down to the level bottom)
+    this.gMin = 8; this.gMax = height - 4; this.base = ground; // limits and target height for pieces that move the ground
   }
   _col(x) { while (this.cols.length <= x) { this.cols.push(new Int16Array(this.height)); this.dec.push(new Int16Array(this.height)); this.surf.push(null); } return this.cols[x]; }
   set(x, y, id) { if (x >= 0 && y >= 0 && y < this.height) this._col(x)[y] = id; return this; }
   get(x, y) { return x < 0 || y < 0 || y >= this.height || x >= this.cols.length ? 0 : this.cols[x][y]; }
   put(name, x, y) { return this.set(x, y, this.ts.names[name]); }
-  _fill(x, from) { const c = this._col(x); for (let y = Math.max(0, from); y < this.height; y++) if (!c[y]) c[y] = GROUND; }
+  _fill(x, from, depth = this.depth) { const c = this._col(x); for (let y = Math.max(0, from); y < Math.min(this.height, from + depth); y++) if (!c[y]) c[y] = GROUND; }
+  // Move the cursor: lets one stretch of level be built several times at different heights (tiers).
+  at(x, g = this.g) { this._col(x); this.x = x; this.g = g; return this; }
+  // highest occupied row (terrain or object) in a column range: what a tier above must clear
+  skyline(x0, x1) {
+    let top = this.height;
+    for (let x = Math.max(0, x0); x <= Math.min(this.cols.length - 1, x1); x++) { const c = this.cols[x]; for (let y = 0; y < top; y++) if (c[y]) { top = y; break; } }
+    for (const o of this.objects) if (o.x + o.w > x0 * T && o.x < (x1 + 1) * T) top = Math.min(top, Math.floor(o.y / T));
+    return top;
+  }
+  isFlat(x, g) { return this.surf[x] === g * T; }
 
   // --- terrain -------------------------------------------------------------------
-  flat(n = 1) { for (let i = 0; i < n; i++) { this._fill(this.x, this.g); this.surf[this.x] = this.g * T; this.x++; } return this; }
+  flat(n = 1) { for (let i = 0; i < n; i++) { this._fill(this.x, this.g); this.surf[this.x] = this.g * T; this.tops.push([this.x, this.g]); this.x++; } return this; }
   gap(n = 1) { this._col(this.x + n - 1); this.x += n; return this; }
   step(d) { this.g += d; return this; } // negative = up
   piece(name) {
@@ -36,7 +49,7 @@ export class LevelBuilder {
     for (const o of p.objects) this.objects.push({ ...o, x: x0 * T + o.x, y: g * T + o.y, cx: x0 * T + o.cx, cy: g * T + o.cy });
     for (let c = 0; c < p.width; c++) this.surf[x0 + c] = null;
     this.x = x0 + p.width; this.g = g + p.dy;
-    if (!p.cliff) { this.surf[this.x] = this.g * T; this.x++; } // trailing pad column
+    if (!p.cliff) { this.surf[this.x] = this.g * T; this.tops.push([this.x, this.g]); this.x++; } // trailing pad column
     this.last = { name, x0, g, p };
     return this;
   }
@@ -73,7 +86,19 @@ export class LevelBuilder {
   flyer(dx = 0, up = 3) { return this.obj('flyer', dx, up); }          // hovers, bobbing up and down
   checkpoint(dx = 0) { return this.obj('checkpoint', dx, 1); }
   deco(name, dx = 0, up = 1) { this._col(this.x + dx); if (this.g - up >= 0) this.dec[this.x + dx][this.g - up] = this.ts.names[name]; return this; }
-  spring(dx = 0) { return this.obj('spring', dx, 1); }
+  // power: launch speed in 16px-grid units per frame; omit for the standard spring (about 11 tiles of height)
+  spring(dx = 0, power) { return this.obj('spring', dx, 1, power ? { power } : {}); }
+  // spring strong enough to rise `rows` tiles
+  springFor(dx, rows) { return this.spring(dx, rows <= 9 ? undefined : Math.round(Math.sqrt(2 * 0.21875 * 16 * (rows + 2.5)) * 10) / 10); }
+  // cut a hole through the ground: removes terrain in a column range between two rows
+  carve(x0, x1, y0, y1) {
+    for (let x = x0; x <= x1; x++) { const c = this._col(x); for (let y = Math.max(0, y0); y <= Math.min(this.height - 1, y1); y++) c[y] = 0; this.surf[x] = null; }
+    this.tops = this.tops.filter(([x, g]) => x < x0 || x > x1 || g < y0 || g > y1);
+    return this;
+  }
+  // solid column from row y0 downward until it meets existing terrain (or y1)
+  wall(x, y0, y1) { const c = this._col(x); for (let y = Math.max(0, y0); y <= Math.min(this.height - 1, y1) && !c[y]; y++) c[y] = GROUND; return this; }
+  wallUp(x, y1, y0) { const c = this._col(x); for (let y = Math.min(this.height - 1, y1); y >= Math.max(0, y0) && !c[y]; y--) c[y] = GROUND; return this; }
   booster(dx = 0, dir = 1) { return this.obj('booster', dx, 1, { dir }); }
   // speed section lead-in: a booster at each end of an n-tile flat, so it cannot be skipped by one jump
   runUp(n = 5) { if (n >= 4) this.deco('sign', 2); return this.booster(0).flat(n - 1).booster(0).flat(1); }
@@ -114,25 +139,28 @@ export class LevelBuilder {
   decorate(rng, density = 1) { // clouds and distant hills come from the parallax background
     this._scenery(rng);
     this.hang = { rng, chance: (this.theme === 'cavern' ? 0.45 : 0.2) * density }; // growths under ceilings, placed in finish()
-    const w = this.cols.length;
-    const flatRun = (x, n) => { for (let i = 0; i < n; i++) if (this.surf[x + i] == null || this.surf[x + i] !== this.surf[x]) return false; return true; };
-    for (let x = 2; x < w - 6; x++) {
-      if (rng.chance(0.1 * density) && flatRun(x, 3)) this._stamp('bush', 3, 1, x, this.surf[x] / T - 1);
-      if (rng.chance(0.16 * density) && this.surf[x] != null) this._stamp(rng.pick(FLORA[this.theme] || FLORA.meadow), 1, 1, x, this.surf[x] / T - 1);
+    const flat = new Set(this.tops.map(([x, g]) => `${x},${g}`));
+    for (const [x, g] of this.tops) { // every tier gets plants
+      if (x < 2 || x > this.cols.length - 6) continue;
+      if (rng.chance(0.1 * density) && flat.has(`${x + 1},${g}`) && flat.has(`${x + 2},${g}`)) this._stamp('bush', 3, 1, x, g - 1);
+      if (rng.chance(0.16 * density)) this._stamp(rng.pick(FLORA[this.theme] || FLORA.meadow), 1, 1, x, g - 1);
     }
     return this;
   }
-  // one big set piece every few tiles: ground props stand on flat ground, sky props float above it
+  // big set pieces: ground props stand on flat ground of any tier, sky props float above it
   _scenery(rng) {
     const props = buildProps(), set = PROP_SETS[this.theme] || PROP_SETS.meadow, w = this.cols.length;
+    const byCol = new Map();
+    for (const [x, g] of this.tops) { if (!byCol.has(x)) byCol.set(x, []); byCol.get(x).push(g); }
     let last = null;
-    for (let x = rng.int(4, 8); x < w - 14; x += rng.int(5, 10)) {
+    for (let x = rng.int(4, 8); x < w - 14; x += rng.int(4, 8)) {
+      const rows = byCol.get(x);
+      if (!rows) continue;
       let name = rng.pick(set);
       if (name === last) name = rng.pick(set);
-      const p = props[name], ground = this.surf[x];
-      if (p.sky) { const base = ground ?? this.g0 * T; this.props.push({ name, x: x * T, y: Math.max((this.ceiling + 1) * T, base - p.h - rng.int(4, 8) * T) }); }
-      else if (ground != null) this.props.push({ name, x: Math.round(x * T + T / 2 - p.w / 2), y: ground - p.h + p.sink });
-      else continue;
+      const p = props[name], ground = rng.pick(rows) * T;
+      if (p.sky) this.props.push({ name, x: x * T, y: Math.max((this.ceiling + 1) * T, ground - p.h - rng.int(4, 8) * T) });
+      else this.props.push({ name, x: Math.round(x * T + T / 2 - p.w / 2), y: ground - p.h + p.sink });
       last = name;
     }
   }

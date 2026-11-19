@@ -32,10 +32,16 @@ function bgFor(theme) {
 }
 function drawBackground(level, cx, cy, frame) {
   const { bg, canvas } = bgFor(level.theme);
-  const ground = (level.groundRow || 22) * T, camRef = Math.max(0, Math.min(level.height * T - VH, ground - T / 2 - VH * 0.58));
-  const horizon = ground - camRef - HORIZON_ABOVE_GROUND - (cy - camRef) * 0.3; // drifts a little with camera height
+  // The backdrop is pinned to the screen: over the whole height of the level the horizon only
+  // slides a fifth of the view, so tall levels keep their scenery wherever you climb or fall.
+  const horizon = VH * (0.62 - 0.2 * (cy / Math.max(1, level.height * T - VH)));
   layoutBackground(bg, { camX: cx, horizon, frame, viewH: VH }, (l, sy, rows, dy, off) => {
-    if (sy < 0) { g.fillStyle = THEMES[level.theme].colors[SLOTS[l.fill]]; g.fillRect(0, dy, VW, rows); return; }
+    if (sy < 0) { // below the last strip: the foreground colour sinking into darkness in bands
+      g.fillStyle = THEMES[level.theme].colors.bgNearD; g.fillRect(0, dy, VW, rows);
+      for (let k = 1; k <= 5; k++) { g.fillStyle = `rgba(10,4,30,${0.16 * k})`; g.fillRect(0, dy + k * 26, VW, 27); }
+      g.fillStyle = THEMES[level.theme].colors.ink; g.fillRect(0, dy + 156, VW, Math.max(0, rows - 156));
+      return;
+    }
     const c = canvas.get(l);
     if (l.once) { g.drawImage(c, 0, sy, l.w, rows, -off, dy, l.w, rows); return; }
     for (let x = -(((off % l.w) + l.w) % l.w); x < VW; x += l.w) g.drawImage(c, 0, sy, l.w, rows, x, dy, l.w, rows);
@@ -63,7 +69,7 @@ function load(level) {
   const p = state.sim.p;
   state.cam.x = p.x - VW / 2; state.cam.y = p.y - VH * 0.6;
   $('hudName').textContent = level.name;
-  const im = renderLevel(ts, level), mini = $('mini');
+  const im = renderLevel(ts, level, level.theme, level.height > 40 ? 4 : 2), mini = $('mini');
   mini.width = im.w; mini.height = im.h;
   mini.getContext('2d').putImageData(new ImageData(im.rgba, im.w, im.h), 0, 0);
 }
@@ -96,7 +102,7 @@ function drawTile(sheet, id, x, y) { if (id) g.drawImage(sheet, ((id - 1) % ts.c
 function draw() {
   const { level, sim, cam } = state, p = sim.p, sheet = atlasFor(level.theme);
   cam.x += (Math.max(0, Math.min(level.width * T - VW, p.x - VW * 0.42)) - cam.x) * 0.2;
-  cam.y += (Math.max(0, Math.min(level.height * T - VH, p.y - VH * 0.58)) - cam.y) * 0.12;
+  cam.y += (Math.max(0, Math.min(level.height * T - VH, p.y - VH * 0.58)) - cam.y) * 0.22;
   const cx = Math.round(cam.x), cy = Math.round(cam.y);
   const bands = skyBands(level.theme), bh = Math.ceil(VH / bands.length); // banded sky, no smooth gradient
   bands.forEach((c, i) => { g.fillStyle = `rgb(${c})`; g.fillRect(0, i * bh, VW, bh); });
@@ -162,7 +168,7 @@ function draw() {
   $('hudAngle').textContent = Math.round(p.ang);
   $('hudPath').textContent = p.path;
   $('hudState').textContent = state.useBot ? 'bot playing' : 'you are playing';
-  $('miniMark').style.left = `${(p.x / (level.width * T)) * 100}%`;
+  $('miniMark').style.left = `${(p.x / (level.width * T)) * 100}%`; $('miniMark').style.top = `${(p.y / (level.height * T)) * 100}%`;
 }
 
 function tick() {
@@ -221,21 +227,22 @@ $('restart').onclick = () => { state.sim.reset(); state.bot = new Bot(); };
 EXAMPLES.forEach((e, i) => { $(`lv${i}`).onclick = () => { load(e.build(ts)); showPieces(null); (state.crtOn ? $('crt') : game).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }; });
 
 // ---- generator ------------------------------------------------------------------
+const TALL_PIECES = new Set(['basement', 'tier2', 'tier3', 'tier4', 'springTower', 'wallLaunch', 'bigStairs', 'plunge', 'cascade', 'slalom', 'tallLoop']);
 const FLOW_PIECES = new Set(['rollers', 'hill', 'loop', 'kicker', 'quarterPipe', 'sDrop', 'dropIn', 'speedway', 'doubleLoop', 'halfPipe', 'wave', 'loopKicker', 'rampJump', 'skyway']);
 function showPieces(level) {
   const chips = $('chips'); chips.textContent = '';
   if (!level) { $('genNote').textContent = 'Hand-made level loaded. Generate to see the piece list for a seed.'; return; }
-  for (const p of level.meta.pieces) { const s = document.createElement('span'); s.className = `chip ${FLOW_PIECES.has(p.piece) ? 'flow' : 'block'}`; s.textContent = p.piece; s.title = `starts at tile ${p.x}`; chips.append(s); }
+  for (const p of [...level.meta.pieces].sort((a, b) => a.x - b.x)) { const s = document.createElement('span'); s.className = `chip ${TALL_PIECES.has(p.piece) ? 'tall' : FLOW_PIECES.has(p.piece) ? 'flow' : 'block'}`; s.textContent = p.piece; s.title = `starts at tile ${p.x}`; chips.append(s); }
   const m = level.meta;
-  $('genNote').textContent = `${level.width} tiles, ${m.pieces.length} pieces, ${THEMES[level.theme].label} theme. ` + (m.validated ? `Bot reached the goal in ${(m.botFrames / 60).toFixed(1)}s${m.attempt ? ` (attempt ${m.attempt + 1})` : ''}.` : 'Bot could not finish this one.');
+  $('genNote').textContent = `${level.width} by ${level.height} tiles, ${m.pieces.length} pieces, ${THEMES[level.theme].label} theme. ` + (m.validated ? `Bot reached the goal by the high route and the low route${m.attempt ? ` (attempt ${m.attempt + 1})` : ''}.` : 'Bot could not finish this one.');
 }
 function generate() {
-  const level = generateLevel(ts, { seed: Math.max(1, +$('seed').value || 1), flow: +$('flow').value, difficulty: +$('diff').value, length: +$('len').value, theme: $('theme').value || null });
+  const level = generateLevel(ts, { seed: Math.max(1, +$('seed').value || 1), flow: +$('flow').value, difficulty: +$('diff').value, length: +$('len').value, vertical: +$('vert').value, theme: $('theme').value || null });
   load(level); showPieces(level);
 }
 $('gen').onclick = () => { generate(); (state.crtOn ? $('crt') : game).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
 $('rand').onclick = () => { $('seed').value = 1 + Math.floor(Math.random() * 99999); generate(); };
-for (const [id, out] of [['flow', 'flowOut'], ['diff', 'diffOut'], ['len', 'lenOut']]) $(id).oninput = () => { $(out).textContent = $(id).value; };
+for (const [id, out] of [['flow', 'flowOut'], ['diff', 'diffOut'], ['len', 'lenOut'], ['vert', 'vertOut']]) $(id).oninput = () => { $(out).textContent = $(id).value; };
 
 // ---- tile sheet -----------------------------------------------------------------
 const sheet = $('sheet'), SCALE = 1;
@@ -259,5 +266,6 @@ sheet.addEventListener('pointermove', (e) => {
 
 load(EXAMPLES[0].build(ts));
 showPieces(null);
+setTimeout(generate, 60); // then swap in a tall generated level once the page has painted
 drawSheet();
 requestAnimationFrame(frame);

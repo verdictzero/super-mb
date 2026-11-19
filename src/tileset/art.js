@@ -72,10 +72,10 @@ function spikes() {
   }
   return t.hline(0, 15, 16, P.steelD).outline(P.ink);
 }
-function spring() {
+function spring(hi) { // hi: the stronger launcher, in different colours
   const t = T().rect(2, 13, 12, 3, P.steelD).hline(2, 13, 12, P.steel);
   t.art(4, 8, ['.######.', '##....##', '.######.', '##....##', '.######.'], { '#': P.steelL });
-  t.rect(1, 4, 14, 4, P.red).hline(1, 4, 14, P.yellow).hline(1, 7, 14, P.redD);
+  t.rect(1, 4, 14, 4, hi ? P.gem : P.red).hline(1, 4, 14, hi ? P.white : P.yellow).hline(1, 7, 14, hi ? P.gemD : P.redD);
   return t.outline(P.ink);
 }
 function booster() { // points right; flipped for left
@@ -207,7 +207,7 @@ export function handTiles() {
   add('plank_m', plank(false, false), { kind: 'oneway', mask: rows(0, 4) });
   add('plank_r', plank(false, true), { kind: 'oneway', mask: rows(0, 4) });
   add('spikes', spikes(), { kind: 'hazard', mask: rows(8, 15) });
-  add('spring', spring(), { kind: 'object' });
+  add('spring', spring(false), { kind: 'object' });
   const bo = booster();
   add('booster_r', bo, { kind: 'object' });
   add('booster_l', bo.flipX(), { kind: 'object' });
@@ -224,6 +224,7 @@ export function handTiles() {
   for (const k of ['top', 'plain', 'stones', 'ore', 'fossil']) add(`deep_${k}`, deep(k), { kind: 'ground', mask: FULL, ang: [null, null, null, null] });
   for (const [name, img] of Object.entries(flora())) add(name, img, { kind: 'decor' });
   add('check_off', checkpoint(false), { kind: 'object' }); add('check_on', checkpoint(true), { kind: 'object' });
+  add('spring_hi', spring(true), { kind: 'object' });
   add('flyer_0', flyer(true), { kind: 'sprite' }); add('flyer_1', flyer(false), { kind: 'sprite' });
   return out;
 }

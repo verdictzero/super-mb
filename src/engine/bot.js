@@ -62,7 +62,7 @@ export class Bot {
     }
     this.hold = 0; this.air = 1;
     if (p.jumpHeld || modeOf(p.ang) !== 0) return { right: true }; // release before the next press
-    if (sim.loops.some((L) => p.x > L.x && p.x < L.x + L.w && p.y > L.y)) return { right: true };
+    if (sim.loops.some((L) => p.x > L.x && p.x < L.x + L.w && p.y > L.y && p.y < L.y + L.h + 16 * S)) return { right: true }; // inside a loop: just run
     const base = coast(sim, 90);
     if (base.won || (!base.dead && base.x - p.x >= 8 * S)) return { right: true };
     if (base.dead && best(sim, 3)) return { right: true }; // a later jump still works: wait for the edge
@@ -73,8 +73,9 @@ export class Bot {
 }
 
 // Runs the bot through a level. ok = reached the goal.
-export function playtest(ts, level, { trace = false } = {}) {
+export function playtest(ts, level, { trace = false, noLifts = false } = {}) {
   const sim = new Sim(ts, level), bot = new Bot();
+  if (noLifts) sim.objs = sim.objs.filter((o) => !o.lift); // stay off the upper tiers
   const limit = level.width * 40 + 1200;
   let bestX = 0, since = 0;
   const path = [];

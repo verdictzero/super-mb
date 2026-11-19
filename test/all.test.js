@@ -20,7 +20,7 @@ test('tileset: 47 ground autotiles, slope and loop metadata', () => {
   assert.deepEqual([...paths].sort(), ['A', 'B', undefined].sort());
 });
 
-const track = (pieces) => { const b = new LevelBuilder(ts); b.flat(12); pieces(b); b.flat(30); return b.finish(); };
+const track = (pieces) => { const b = new LevelBuilder(ts, { height: 40, ground: 32 }); b.flat(12); pieces(b); b.flat(30); return b.finish(); };
 const runRight = (level, frames) => {
   const sim = new Sim(ts, level);
   let topped = false;
@@ -57,15 +57,27 @@ test('quarter pipe launches a fast runner upward', () => {
 
 for (const e of EXAMPLES) test(`example ${e.id} is completable`, () => { const r = playtest(ts, e.build(ts)); assert.ok(r.ok, JSON.stringify(r)); });
 
-test('generator: deterministic, validated, within height bounds', () => {
+test('generator: deterministic, tall, multi-tiered and validated on both routes', () => {
   const a = generateLevel(ts, { seed: 42 }), b = generateLevel(ts, { seed: 42 });
   assert.deepEqual(a.terrain, b.terrain);
-  assert.notDeepEqual(a.terrain, generateLevel(ts, { seed: 43 }).terrain);
-  for (let seed = 1; seed <= 30; seed++) for (const flow of [0, 0.5, 1]) {
-    const L = generateLevel(ts, { seed, flow, difficulty: (seed % 5) / 4 });
-    assert.ok(L.meta.validated, `seed ${seed} flow ${flow}`);
-    assert.ok(L.width >= 180 && L.objects.some((o) => o.type === 'goal'));
+  assert.notDeepEqual(a.terrain, generateLevel(ts, { seed: 43, validate: false }).terrain);
+  let tiers = 0, basements = 0, tall = 0;
+  for (let seed = 1; seed <= 8; seed++) {
+    const L = generateLevel(ts, { seed, flow: (seed % 3) / 2, difficulty: (seed % 5) / 4 });
+    assert.ok(L.meta.validated, `seed ${seed}`);
+    assert.ok(L.height >= 100 && L.width >= 300 && L.objects.some((o) => o.type === 'goal'));
+    const names = L.meta.pieces.map((p) => p.piece);
+    tiers += names.filter((n) => n.startsWith('tier')).length; basements += names.filter((n) => n === 'basement').length; tall += names.filter((n) => n === 'tallLoop').length;
+    const rows = L.objects.filter((o) => o.type === 'gem').map((o) => o.y / TILE);
+    assert.ok(Math.max(...rows) - Math.min(...rows) > 30, `seed ${seed} spans ${Math.max(...rows) - Math.min(...rows)} rows`);
   }
+  assert.ok(tiers >= 8 && basements >= 2 && tall >= 3, JSON.stringify({ tiers, basements, tall }));
+});
+for (const name of ['loop14', 'loop18']) test(`${name}: boosted run completes the tall loop`, () => {
+  const level = track((b) => b.runUp(8).piece(name));
+  const L = level.objects.find((o) => o.type === 'loop');
+  const { sim, topped } = runRight(level, 600);
+  assert.ok(topped && sim.p.x > L.x + L.w + TILE);
 });
 
 test('Tiled export round-trips', () => {

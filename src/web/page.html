@@ -20,6 +20,7 @@ h2 { font-size: 24px; }
 header p, section > p { margin: 6px 0 0; color: var(--muted); max-width: 65ch; }
 section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 canvas { image-rendering: pixelated; display: block; }
+[hidden] { display: none !important; }
 .screen { background: var(--screen); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
 #game, #crt { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 4px; touch-action: none; }
 #crt { image-rendering: auto; border-radius: 14px; }
@@ -29,7 +30,7 @@ canvas { image-rendering: pixelated; display: block; }
 .hud b { color: #ffc27a; font-weight: 500; }
 .mini { position: relative; overflow: hidden; border-radius: 4px; }
 #mini { width: 100%; height: auto; }
-#miniMark { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 0 1px #1b1630; }
+#miniMark { position: absolute; width: 7px; height: 7px; margin: -3px 0 0 -3px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px #1b1630; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 button, select, input[type="number"] { font: 500 14px var(--body); color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-height: 38px; height: 38px; }
 button { cursor: pointer; }
@@ -49,6 +50,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .chip { flex: none; font: 12px var(--mono); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line); white-space: nowrap; }
 .chip.flow { border-color: var(--accent); color: var(--accent); }
 .chip.block { border-color: var(--grass); color: var(--grass); }
+.chip.tall { border-color: var(--fg); color: var(--fg); font-weight: 500; }
 .note { font: 12px/1.5 var(--mono); color: var(--muted); min-height: 18px; }
 .sheet { overflow-x: auto; background: var(--screen); border-radius: 10px; padding: 8px; }
 #sheet { cursor: crosshair; }
@@ -58,7 +60,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
 <div class="wrap">
   <header>
     <h1>Super MB Level Lab</h1>
-    <p>An original 32px tileset in a loud 32-bit arcade style (neon palettes, patterned ground, candy-striped edges, banded skies), with the block-platformer basics (ground, bricks, bonus blocks, pipes, stairs) plus momentum terrain: ramps, rolling hills, quarter pipes and full loops. Behind it, big set pieces (ferris wheels, balloons, arches, totems) stand in front of parallax backgrounds that scroll in bands at different speeds. Everything below is drawn, laid out and played by the code in this repo.</p>
+    <p>An original 32px tileset in a loud 32-bit arcade style (neon palettes, patterned ground, candy-striped edges, banded skies), with the block-platformer basics (ground, bricks, bonus blocks, pipes, stairs) plus momentum terrain: ramps, rolling hills, quarter pipes and loops up to 18 tiles across. Generated levels are tall and multi-tiered: stacked routes, basements, big climbs and plunges. Behind it, big set pieces (ferris wheels, balloons, arches, totems) stand in front of parallax backgrounds that scroll in bands at different speeds. Everything below is drawn, laid out and played by the code in this repo.</p>
   </header>
 
   <section aria-label="Game">
@@ -92,23 +94,26 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
 
   <section aria-label="Generator">
     <h2>Generate a level</h2>
+    <p>Generating takes a second or two: the level is built and then played through twice by the bot.</p>
     <div class="panel">
       <div class="fields">
         <label for="seed">Seed<input id="seed" type="number" min="1" max="999999" value="1984"></label>
         <label for="theme">Theme<select id="theme"><option value="">From seed</option><option value="meadow">Garden</option><option value="cavern">Neon</option><option value="dusk">Sunset</option></select></label>
         <label for="flow"><span>Flow (speed terrain) <output id="flowOut">0.6</output></span><input id="flow" type="range" min="0" max="1" step="0.05" value="0.6"></label>
         <label for="diff"><span>Difficulty <output id="diffOut">0.5</output></span><input id="diff" type="range" min="0" max="1" step="0.05" value="0.5"></label>
-        <label for="len"><span>Length (tiles) <output id="lenOut">240</output></span><input id="len" type="range" min="120" max="400" step="20" value="240"></label>
+        <label for="vert"><span>Verticality <output id="vertOut">0.7</output></span><input id="vert" type="range" min="0" max="1" step="0.05" value="0.7"></label>
+        <label for="len"><span>Length (tiles) <output id="lenOut">360</output></span><input id="len" type="range" min="160" max="600" step="20" value="360"></label>
       </div>
       <div class="row"><button id="gen" class="primary">Generate</button><button id="rand">Random seed</button></div>
       <div class="chips" id="chips" aria-label="Pieces in this level"></div>
       <div class="note" id="genNote"></div>
     </div>
     <ol class="how">
-      <li><b>Pacing.</b> The level is a chain of zones. Each is a block zone (green chips) or a flow zone (orange chips); the flow slider sets the mix, difficulty rises along the level and every third zone is a breather.</li>
+      <li><b>Shape.</b> The level is 128 tiles tall. The main route runs across plateaus joined by big climbs (spring towers, wall launches, terraces) and descents (plunges, cascades, S-drop slaloms), with tall loops between them. Over each plateau the generator stacks up to three more tiers, reached by wall-guided springs, and under some it digs a basement you drop into through a shaft or any pit and leave by a spring well. Structural pieces are the outlined chips.</li>
+      <li><b>Pacing.</b> Each route is a chain of zones: block zones (green chips) or flow zones (orange chips). The flow slider sets the mix, difficulty rises along the level and every third plateau is a breather.</li>
       <li><b>Pieces.</b> A zone is filled with weighted pieces, from single obstacles to layered ones (upper decks, tunnels, bridges, spike trenches) and combos (double loops, half-pipes, a loop straight into a launch ramp). Each one leaves the cursor on flat ground so any piece can follow any other, and the picker steers the ground back toward its baseline height.</li>
       <li><b>Rules from physics.</b> Pits, ledges and pipes stay within one jump. Loops, quarter pipes and kickers get boosters and a run-up in front of them.</li>
-      <li><b>Playtest.</b> A look-ahead bot plays the finished level. If it cannot reach the goal, the generator retries with a derived seed.</li>
+      <li><b>Playtest.</b> A look-ahead bot plays the finished level twice: once taking every lift to the upper tiers, once staying low. If either run cannot reach the goal, the generator retries with a derived seed.</li>
     </ol>
   </section>
 

@@ -21,6 +21,13 @@ export class Sim {
   constructor(ts, level) {
     this.ts = ts; this.level = level;
     this.w = level.width; this.h = level.height;
+    // Falling is fatal once you are below everything that could catch you: per column, a few
+    // tiles under the lowest solid tile in that column or the six either side (so a pit is as deep
+    // as the ground around it).
+    const low = new Int32Array(this.w).fill(-1);
+    for (let x = 0; x < this.w; x++) for (let y = this.h - 1; y >= 0; y--) { const id = level.terrain[y * this.w + x]; if (id && ts.tiles[id].mask) { low[x] = y; break; } }
+    this.killY = new Float64Array(this.w);
+    for (let x = 0; x < this.w; x++) { let m = -1; for (let k = -6; k <= 6; k++) m = Math.max(m, low[Math.max(0, Math.min(this.w - 1, x + k))]); this.killY[x] = (m < 0 ? this.h : Math.min(this.h, m + 5)) * TILE + 24 * S; }
     this.reset();
   }
   reset(fromCheckpoint = false) {
@@ -94,7 +101,7 @@ export class Sim {
     p.spin += (p.grounded ? p.gsp : p.xsp) / PHYS.r;
     this._paths();
     this._objects(input);
-    if (p.y > this.h * TILE + 24 * S) this._die('fell');
+    if (p.y > this.killY[Math.max(0, Math.min(this.w - 1, p.x >> SH))]) this._die('fell');
     if (p.x >= this.goalX && !p.dead) p.won = true;
   }
 
@@ -123,7 +130,7 @@ export class Sim {
       mode = modeOf(p.ang);
       if (mode === 0 && p.gsp) { // walls only matter while upright
         const sx = Math.sign(p.gsp), c = this.cast(p.x, p.y, sx, 0, p.path, false, P.r + 1);
-        if (c && c.i < P.r) { p.x += sx * (c.i - P.r); p.gsp = 0; p.hitWall = true; }
+        if (c && c.i < P.r) { if (c.t && c.t.kind === 'hazard') return this._die('spikes'); p.x += sx * (c.i - P.r); p.gsp = 0; p.hitWall = true; }
       }
       const hit = this._feet(mode, mode === 0);
       if (!hit || hit.i - P.r > 14 * S) { this._leave(); return; }
@@ -213,7 +220,8 @@ export class Sim {
       const dx = p.x - (o.x + H), dy = p.y - (o.y + H);
       if (o.type === 'goal' || Math.abs(dx) > 13 * S || Math.abs(dy) > 13 * S) continue;
       if (o.type === 'gem') { o.alive = false; p.gems++; this.events.push({ type: 'gem', x: o.x + H, y: o.y + H }); }
-      else if (o.type === 'spring' && dy < 2 * S) { p.ysp = -P.spring; p.xsp = p.grounded ? p.gsp : p.xsp; p.grounded = false; p.jumping = false; p.ang = 0; p.y -= 2 * S; }
+      else if (o.type === 'spring' && dy < 2 * S) { p.ysp = -(o.power ? o.power * S : P.spring); p.xsp = (p.grounded ? p.gsp : p.xsp) * 0.2; this.events.push({ type: 'boost', x: p.x, y: p.y }); // springs send you up, not along
+        p.grounded = false; p.jumping = false; p.ang = 0; p.y -= 2 * S; }
       else if (o.type === 'booster' && p.grounded) { if (p.gsp * o.dir < P.boost) { p.gsp = o.dir * P.boost; this.events.push({ type: 'boost', x: p.x, y: p.y }); } }
       else if (o.type === 'walker' || o.type === 'flyer') {
         if (!p.grounded && p.ysp > 0 && dy < -3 * S) { o.alive = false; this.events.push({ type: 'bop', x: o.x + H, y: o.y + H }); p.ysp = input.jump ? -P.jump : -3.5 * S; }

@@ -125,18 +125,29 @@ convert to and from Tiled maps (layers `decor`, `terrain`, `objects`).
 
 ## Generator
 
-`generateLevel(ts, { seed, length, difficulty, flow, theme })` in `src/level/generator.js`:
+`generateLevel(ts, { seed, length, difficulty, flow, vertical, theme })` in `src/level/generator.js`
+builds levels 128 tiles tall and several hundred wide.
 
-1. **Pacing**: the level is a chain of zones, each a block zone or a flow zone. `flow` sets the mix,
-   difficulty ramps with progress, every third zone is a breather.
-2. **Pieces**: each zone is filled with weighted pieces that leave the cursor on flat ground, so any
-   piece can follow any other. They range from single obstacles to layered pieces (upper decks,
-   tunnels, plank bridges, spike trenches, block towers) and combos (double loops, half-pipes,
-   wave runs, a loop straight into a kicker). The picker steers ground height back toward the baseline.
-3. **Rules from physics**: pits, ledges and pipes stay within one jump (`RULES`); anything that needs
-   speed gets boosters and a run-up; launches get a landing runway.
-4. **Playtest**: a look-ahead bot (`src/engine/bot.js`) plays the result using the real simulation.
-   If it cannot reach the goal the generator retries with a derived seed. `level.meta.validated`
-   records the outcome.
+1. **Shape**: the main route runs across plateaus joined by connectors that change height by 10-25
+   tiles: ascents (spring towers, quarter-pipe wall launches, terraces) and descents (cliff plunges,
+   ledge cascades, S-drop slaloms), often with a tall loop (14 or 18 tiles across) after them.
+2. **Tiers**: the main route leaves ten-tile "pads". From a pad the generator can hang a tier above
+   the route, placed just over whatever is built below it, and tiers leave pads of their own, so up
+   to three stack. A tier starts with a hanging wall and a spring beside it: the spring sends you
+   straight up, the wall stops you drifting under the deck. Falling off a tier, or through one of its
+   pits, drops you to the route below.
+3. **Basements**: under some plateaus there is an enclosed lower route. You enter by a drop shaft, or
+   by any pit of the route above (which stops being lethal), and leave by a spring well at the far end.
+4. **Pieces**: each route is filled with weighted pieces that leave the cursor on flat ground, so any
+   piece can follow any other: single obstacles, layered pieces (upper decks, tunnels, plank bridges,
+   spike trenches, block towers) and combos (double loops, half-pipes, wave runs, loop into kicker).
+5. **Rules from physics**: pits, ledges and pipes stay within one jump (`RULES`); anything that needs
+   speed gets boosters and a run-up; launches get a landing runway. Ground is laid as slabs of finite
+   thickness, and falling is fatal a few tiles below the lowest ground nearby.
+6. **Playtest**: a look-ahead bot (`src/engine/bot.js`) plays the result twice with the real
+   simulation, once taking every lift and once staying off the upper tiers. If either run fails, the
+   generator retries with a derived seed. `level.meta.validated` records the outcome.
 
-The same seed and options always produce the same level.
+`vertical` (0-1) sets how many tiers, basements and connectors appear; 0 gives a single flat route.
+The same seed and options always produce the same level. The three hand-made levels are the older
+single-route, 30-tile-tall kind.

@@ -27,7 +27,7 @@ export function prefabDefs() {
   // kicker: short launch ramp that ends in a cliff (must be followed by a gap)
   hf('kicker', 3 * U, arcUp(4 * U), { cliff: true });
 
-  for (const [name, R] of [['loop6', 3 * U], ['loop10', 5 * U]]) {
+  for (const [name, R] of [['loop6', 3 * U], ['loop10', 5 * U], ['loop14', 7 * U], ['loop18', 9 * U]]) {
     const T = U, Wb = 2 * R + 2 * T, Ht = 2 * R + T, rc = 20 * S, cx = Wb / 2, cy = -R;
     defs.push({
       name, type: 'mask', x0: -U, x1: Wb + U, y0: -Ht, y1: U, dy: 0, W: Wb,

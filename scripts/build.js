@@ -64,7 +64,7 @@ for (const { id, level } of levels) {
   const test = playtest(ts, level);
   console.log(`${id}: ${level.width}x${level.height}, bot ${test.ok ? `finished in ${test.frames} frames` : `FAILED (${test.reason} at x=${test.x})`}`);
   out(`levels/${id}.tmj`, json(levelToTiled(ts, level)));
-  const im = renderLevel(ts, level);
+  const im = renderLevel(ts, level, level.theme, level.height > 40 ? 2 : 1);
   out(`docs/${id}.png`, encodePNG(im.w, im.h, im.rgba));
 }
 
