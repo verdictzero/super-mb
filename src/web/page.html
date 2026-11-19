@@ -55,7 +55,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
 <div class="wrap">
   <header>
     <h1>Super MB Level Lab</h1>
-    <p>An original 32px tileset with the block-platformer basics (ground, bricks, bonus blocks, pipes, stairs) plus momentum terrain: ramps, rolling hills, quarter pipes and full loops. Behind it, parallax backgrounds scroll in bands at different speeds. Everything below is drawn, laid out and played by the code in this repo.</p>
+    <p>An original 32px tileset in a loud 32-bit arcade style (neon palettes, patterned ground, candy-striped edges, banded skies), with the block-platformer basics (ground, bricks, bonus blocks, pipes, stairs) plus momentum terrain: ramps, rolling hills, quarter pipes and full loops. Behind it, parallax backgrounds scroll in bands at different speeds. Everything below is drawn, laid out and played by the code in this repo.</p>
   </header>
 
   <section aria-label="Game">
@@ -81,7 +81,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
     <div class="panel">
       <div class="fields">
         <label for="seed">Seed<input id="seed" type="number" min="1" max="999999" value="1984"></label>
-        <label for="theme">Theme<select id="theme"><option value="">From seed</option><option value="meadow">Meadow</option><option value="cavern">Cavern</option><option value="dusk">Dusk</option></select></label>
+        <label for="theme">Theme<select id="theme"><option value="">From seed</option><option value="meadow">Garden</option><option value="cavern">Neon</option><option value="dusk">Sunset</option></select></label>
         <label for="flow"><span>Flow (speed terrain) <output id="flowOut">0.6</output></span><input id="flow" type="range" min="0" max="1" step="0.05" value="0.6"></label>
         <label for="diff"><span>Difficulty <output id="diffOut">0.5</output></span><input id="diff" type="range" min="0" max="1" step="0.05" value="0.5"></label>
         <label for="len"><span>Length (tiles) <output id="lenOut">240</output></span><input id="len" type="range" min="120" max="400" step="20" value="240"></label>
@@ -101,7 +101,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
   <section aria-label="Tileset">
     <h2>Tileset</h2>
     <div class="row">
-      <button id="th-meadow" aria-pressed="true">Meadow</button><button id="th-cavern" aria-pressed="false">Cavern</button><button id="th-dusk" aria-pressed="false">Dusk</button>
+      <button id="th-meadow" aria-pressed="true">Garden</button><button id="th-cavern" aria-pressed="false">Neon</button><button id="th-dusk" aria-pressed="false">Sunset</button>
     </div>
     <div class="sheet"><canvas id="sheet"></canvas></div>
     <div class="note" id="tileInfo">Point at a tile to see its name, kind and surface angles. Turn on Show collision to see the solid pixels.</div>

@@ -1,4 +1,4 @@
-// Terrain renderer: turns any solid/air mask into textured, edged ground pixels,
+// Terrain renderer: turns any solid/air mask into patterned, edged ground pixels,
 // and derives per-tile collision data (pixel mask + surface angles) from the same mask.
 // Every ground tile, slope, quarter pipe and loop goes through this one function, which
 // is why they all join without seams.
@@ -15,26 +15,20 @@ for (let y = -REACH; y <= REACH; y++) for (let x = -REACH; x <= REACH; x++) {
 }
 OFFS.sort((a, b) => a.d - b.d);
 
-// Tile-periodic soil texture: two wavy sediment bands plus a few pebbles.
+// Tile-periodic soil: a diamond checker in two tones, each diamond bevelled (light on its
+// upper edges, dark on its lower ones) so the ground reads as glossy patterned panels.
 const MK = T - 1;
-const FILL = new Uint8Array(T * T).fill(P.dirt);
-const fill = (x, y, c) => { FILL[(y & MK) * T + (x & MK)] = c; };
-for (let x = 0; x < T; x++) for (const [base, phase] of [[T / 4, 0], [(3 * T) / 4, Math.PI]]) {
-  const y = Math.round(base + (T / 14) * Math.sin((2 * Math.PI * x) / T + phase));
-  for (let k = 0; k < S; k++) fill(x, y + k, P.dirtD);
-  fill(x, y + S, P.dirtL);
-}
-for (const [x, y] of [[3, 9], [11, 1], [8, 15], [14, 6]]) { // pebbles (16px grid positions)
-  const X = Math.round(x * S), Y = Math.round(y * S);
-  for (let j = 0; j < S; j++) for (let i = 0; i < S + 1; i++) fill(X + i, Y + j, P.dirtX);
-  for (let i = 0; i < S; i++) fill(X + i, Y - 1, P.dirtL);
+const FILL = new Uint8Array(T * T);
+for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) {
+  const H = T / 2, a = (x + y) % T, b = (((x - y) % T) + T) % T; // diagonal axes, period one tile
+  const ca = a % H, cb = b % H, odd = (Math.floor(a / H) + Math.floor(b / H)) % 2;
+  let c = odd ? P.dirt : P.dirtD;
+  if (ca < S || cb < S) c = odd ? P.dirtL : P.dirt;               // lit edges
+  else if (ca >= H - S || cb >= H - S) c = odd ? P.dirtD : P.dirtX; // shaded edges
+  FILL[y * T + x] = c;
 }
 export const soilAt = (x, y) => FILL[(y & MK) * T + (x & MK)]; // the plain soil texture, for tiles that reuse it
-// turf depth variation along the surface (tile-periodic)
-const TUFT = Array.from({ length: T }, (_, x) => (1 + 0.6 * Math.sin((2 * Math.PI * 3 * x) / T) + 0.4 * Math.sin((2 * Math.PI * 7 * x) / T + 1)) * S);
-
-// depth of the ceiling crust along the surface: blunt teeth, tile-periodic
-const CRUST = Array.from({ length: T }, (_, x) => { const u = ((x / T) * 4) % 1; return (0.6 + 2.6 * (1 - Math.abs(u - 0.5) * 2) ** 1.5 + 0.8 * Math.sin((2 * Math.PI * 5 * x) / T)) * S; });
+const STRIPE = 3 * S; // width of the diagonal stripes on floor and ceiling edges
 
 export function renderTerrain(w, h, solidFn) {
   const W = w + 2 * M, H = h + 2 * M;
@@ -66,13 +60,13 @@ export function renderTerrain(w, h, solidFn) {
       const [, ny] = normal(x, y);
       const t = Math.min(1, Math.max(0, (-ny - 0.35) / 0.4)); // 1 = faces up, 0 = wall/ceiling
       const u = Math.min(1, Math.max(0, (ny - 0.35) / 0.4));  // 1 = faces down (a ceiling)
-      if (t > 0) { // turf, thinning out as the surface steepens
-        const depth = 1 + (2 + TUFT[x & MK] / S) * t;
-        if (d <= 1) c = P.grassL; else if (d <= depth) c = P.grass; else if (d <= depth + 1) c = P.grassD;
-      } else if (u > 0) { // ceiling crust: dark lip, toothed band, bright inner seam; thins toward walls
-        const depth = 1.4 + (1.2 + CRUST[x & MK] / S) * u;
-        if (d <= 1) c = P.ceilD; else if (d <= depth) c = P.ceil; else if (d <= depth + 0.9) c = P.ceilL; else if (d <= depth + 1.8) c = P.dirtD;
-      } else if (d <= 1) c = P.rimD; else if (d <= 2.3) c = P.rimL; else if (d <= 3.2) c = P.dirtD;
+      if (t > 0) { // floor edge: white gloss line, then a two-colour diagonal candy stripe; thins as it steepens
+        const depth = 1.2 + 3.4 * t;
+        if (d <= 1) c = P.grassL; else if (d <= depth) c = Math.floor((x + y) / STRIPE) % 2 ? P.grass : P.grassD; else if (d <= depth + 1) c = P.rimD;
+      } else if (u > 0) { // ceiling edge: same idea in the ceiling colours, stripes leaning the other way
+        const depth = 1.2 + 2.6 * u;
+        if (d <= 1) c = P.ceilD; else if (d <= depth) c = Math.floor((x - y + 64 * T) / STRIPE) % 2 ? P.ceil : P.ceilL; else if (d <= depth + 1) c = P.rimD;
+      } else if (d <= 1) c = P.rimD; else if (d <= 2.2) c = P.rimL; else if (d <= 3.2) c = P.dirtL; else if (d <= 4.2) c = P.dirtX; // chrome-like wall trim
     }
     img.set(x, y, c);
   }

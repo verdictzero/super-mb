@@ -8,41 +8,43 @@ import { soilAt } from './terrain.js';
 // tiles are drawn on a 16-unit design grid and rasterised at S pixels per unit
 const T = () => new Img(16, 16, S);
 
-function brick() {
-  const t = T().rect(0, 0, 16, 16, P.brick);
-  for (let r = 0; r < 4; r++) {
-    const y = r * 4;
-    t.hline(0, y, 16, P.brickL).hline(0, y + 3, 16, P.brickD);
-    for (const x of r % 2 ? [3, 11] : [7, 15]) t.vline(x, y, 4, P.brickD);
+// glossy diagonal glint across the top-left of a panel
+const shine = (t, x = 0, y = 0, n = 7) => t.poly([[x + 2, y + n], [x + n, y + 2], [x + n + 1.6, y + 2], [x + 2, y + n + 1.6]], P.white);
+function brick() { // four bevelled glossy panels
+  const t = T().rect(0, 0, 16, 16, P.ink);
+  for (const [x, y] of [[0, 0], [8, 0], [0, 8], [8, 8]]) {
+    t.rect(x + 0.5, y + 0.5, 7, 7, P.brick).rect(x + 0.5, y + 0.5, 7, 1, P.brickL).rect(x + 0.5, y + 0.5, 1, 7, P.brickL).rect(x + 0.5, y + 6.5, 7, 1, P.brickD).rect(x + 6.5, y + 0.5, 1, 7, P.brickD);
+    t.poly([[x + 2, y + 5], [x + 5, y + 2], [x + 5.8, y + 2], [x + 2, y + 5.8]], P.brickL);
   }
   return t;
 }
-function bevel(base, light, dark) {
+function bevel(base, light, dark) { // chunky two-step bevel
   const t = T().rect(0, 0, 16, 16, P.ink).rect(1, 1, 14, 14, base);
-  t.hline(1, 1, 14, light).vline(1, 1, 14, light).hline(1, 14, 14, dark).vline(14, 1, 14, dark);
+  t.poly([[1, 1], [15, 1], [13, 3], [3, 3], [3, 13], [1, 15]], light).poly([[15, 15], [1, 15], [3, 13], [13, 13], [13, 3], [15, 1]], dark);
   return t;
 }
-function rivets(t, c) { for (const [x, y] of [[3, 3], [12, 3], [3, 12], [12, 12]]) t.set(x, y, c); return t; }
+function rivets(t, c) { for (const [x, y] of [[4, 4], [11, 4], [4, 11], [11, 11]]) t.disc(x + 0.5, y + 0.5, 0.8, c); return t; }
 function bonus() {
-  const t = rivets(bevel(P.gold, P.goldL, P.goldD), P.goldD);
+  const t = bevel(P.gold, P.goldL, P.goldD);
+  t.map((x, y, c, i, j) => (c === P.gold && y > 8 && ((i >> 1) + (j >> 1)) % 2 === 0 ? P.orange : undefined)); // dithered lower half
   // regular five-point star: alternate outer and inner vertices every 36 degrees
   const star = (cx, cy, R) => Array.from({ length: 10 }, (_, i) => {
     const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? R * 0.45 : R;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   });
-  return t.poly(star(8, 8.6, 5.3), P.goldD).poly(star(7.5, 8.1, 5.3), P.white);
+  return t.poly(star(8, 8.6, 5), P.goldD).poly(star(7.5, 8.1, 5), P.white);
 }
 function used() { return rivets(bevel(P.wood, P.woodL, P.woodD), P.ink); }
 function hard() {
   const t = bevel(P.stone, P.stoneL, P.stoneD);
-  t.rect(4, 4, 8, 8, P.stoneD).rect(5, 5, 7, 7, P.stoneL).rect(5, 5, 6, 6, P.stone);
-  return t;
+  t.rect(5, 5, 6, 6, P.stoneD).rect(5.5, 5.5, 5, 5, P.steelL).poly([[5.5, 10.5], [10.5, 5.5], [10.5, 10.5]], P.stone);
+  return shine(t, 2.5, 2.5, 3);
 }
 function pipe() { // 2x2 tiles: lip on top, repeatable body below
   const g = new Img(32, 32, S);
   const tube = (x, y, w, h) => {
     g.rect(x, y, w, h, P.ink).rect(x + 1, y, w - 2, h, P.pipe);
-    g.rect(x + 3, y, 3, h, P.pipeL).vline(x + 8, y, h, P.pipeL).rect(x + w - 8, y, 5, h, P.pipeD);
+    g.rect(x + 3, y, 4, h, P.pipeL).rect(x + 4, y, 1.5, h, P.white).vline(x + 9, y, h, P.pipeL).rect(x + w - 9, y, 6, h, P.pipeD).rect(x + w - 5, y, 1, h, P.pipe); // chrome banding
   };
   tube(2, 14, 28, 18);
   g.hline(3, 14, 26, P.pipeD);

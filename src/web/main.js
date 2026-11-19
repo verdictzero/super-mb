@@ -1,6 +1,6 @@
 // Browser demo: renders the tileset, runs the sim at 60fps, and exposes the generator.
 import { buildTileset, atlasImage, toRGBA } from '../tileset/tileset.js';
-import { THEMES, SLOTS } from '../tileset/palette.js';
+import { THEMES, SLOTS, skyBands } from '../tileset/palette.js';
 import { buildBackground, layoutBackground, HORIZON_ABOVE_GROUND } from '../tileset/background.js';
 import { EXAMPLES } from '../level/examples.js';
 import { generateLevel } from '../level/generator.js';
@@ -94,9 +94,8 @@ function draw() {
   cam.x += (Math.max(0, Math.min(level.width * T - VW, p.x - VW * 0.42)) - cam.x) * 0.2;
   cam.y += (Math.max(0, Math.min(level.height * T - VH, p.y - VH * 0.58)) - cam.y) * 0.12;
   const cx = Math.round(cam.x), cy = Math.round(cam.y);
-  const sky = g.createLinearGradient(0, 0, 0, VH);
-  sky.addColorStop(0, THEMES[level.theme].sky[0]); sky.addColorStop(1, THEMES[level.theme].sky[1]);
-  g.fillStyle = sky; g.fillRect(0, 0, VW, VH);
+  const bands = skyBands(level.theme), bh = Math.ceil(VH / bands.length); // banded sky, no smooth gradient
+  bands.forEach((c, i) => { g.fillStyle = `rgb(${c})`; g.fillRect(0, i * bh, VW, bh); });
   drawBackground(level, cx, cy, sim.frame + state.idle);
   const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T), front = [];
   for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
@@ -218,7 +217,7 @@ function drawSheet() {
   sheet.width = atlasIdx.w * SCALE; sheet.height = atlasIdx.h * SCALE;
   sheet.style.width = `${sheet.width}px`;
   const c = sheet.getContext('2d'); c.imageSmoothingEnabled = false;
-  c.fillStyle = THEMES[state.sheetTheme].sky[0]; c.fillRect(0, 0, sheet.width, sheet.height);
+  c.fillStyle = THEMES[state.sheetTheme].sky[1]; c.fillRect(0, 0, sheet.width, sheet.height);
   c.drawImage(atlasFor(state.sheetTheme), 0, 0, sheet.width, sheet.height);
   if (state.showCol) c.drawImage(overlay, 0, 0, sheet.width, sheet.height);
 }

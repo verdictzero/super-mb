@@ -2,8 +2,9 @@
  "meadow": {
   "image": "bg-meadow.png",
   "sky": [
-   "#58b4f5",
-   "#bfe6fb"
+   "#1a4ae0",
+   "#3ab8ff",
+   "#ffc8f0"
   ],
   "horizonAboveGround": 90,
   "layers": [
@@ -11,7 +12,7 @@
     "name": "clouds-far",
     "srcY": 0,
     "w": 512,
-    "h": 44,
+    "h": 48,
     "y": -124,
     "factor": 0.03,
     "drift": 0.06,
@@ -21,10 +22,10 @@
    },
    {
     "name": "clouds-near",
-    "srcY": 44,
+    "srcY": 48,
     "w": 512,
-    "h": 68,
-    "y": -192,
+    "h": 60,
+    "y": -196,
     "factor": 0.06,
     "drift": 0.14,
     "lineScroll": false,
@@ -32,8 +33,8 @@
     "pinTop": false
    },
    {
-    "name": "mountains",
-    "srcY": 112,
+    "name": "prisms",
+    "srcY": 108,
     "w": 512,
     "h": 140,
     "y": -140,
@@ -45,7 +46,7 @@
    },
    {
     "name": "water",
-    "srcY": 252,
+    "srcY": 248,
     "w": 512,
     "h": 80,
     "y": 0,
@@ -57,8 +58,8 @@
     "pinTop": false
    },
    {
-    "name": "hills",
-    "srcY": 332,
+    "name": "domes",
+    "srcY": 328,
     "w": 512,
     "h": 104,
     "y": 12,
@@ -69,30 +70,31 @@
     "pinTop": false
    },
    {
-    "name": "treeline",
-    "srcY": 436,
+    "name": "trees",
+    "srcY": 432,
     "w": 512,
-    "h": 80,
-    "y": 60,
+    "h": 88,
+    "y": 52,
     "factor": 0.58,
     "drift": 0,
     "lineScroll": false,
     "once": false,
     "pinTop": false,
-    "fillBelow": "#1b1630"
+    "fillBelow": "#140a2e"
    }
   ]
  },
  "cavern": {
   "image": "bg-cavern.png",
   "sky": [
-   "#0d1026",
-   "#1b2145"
+   "#04031a",
+   "#18084a",
+   "#5a1890"
   ],
   "horizonAboveGround": 90,
   "layers": [
    {
-    "name": "pillars",
+    "name": "skyline",
     "srcY": 0,
     "w": 512,
     "h": 300,
@@ -104,7 +106,7 @@
     "pinTop": false
    },
    {
-    "name": "stalactites",
+    "name": "hanging-prisms",
     "srcY": 300,
     "w": 512,
     "h": 120,
@@ -129,11 +131,11 @@
     "pinTop": false
    },
    {
-    "name": "crystal-mounds",
+    "name": "spheres",
     "srcY": 500,
     "w": 512,
     "h": 112,
-    "y": 12,
+    "y": 8,
     "factor": 0.4,
     "drift": 0,
     "lineScroll": false,
@@ -141,25 +143,26 @@
     "pinTop": false
    },
    {
-    "name": "rocks",
+    "name": "prisms",
     "srcY": 612,
     "w": 512,
-    "h": 80,
-    "y": 60,
+    "h": 88,
+    "y": 52,
     "factor": 0.58,
     "drift": 0,
     "lineScroll": false,
     "once": false,
     "pinTop": false,
-    "fillBelow": "#1b1630"
+    "fillBelow": "#140a2e"
    }
   ]
  },
  "dusk": {
   "image": "bg-dusk.png",
   "sky": [
-   "#3b2a6e",
-   "#f29a6b"
+   "#38188c",
+   "#f03c8c",
+   "#ffc23a"
   ],
   "horizonAboveGround": 90,
   "layers": [
@@ -200,11 +203,11 @@
     "pinTop": false
    },
    {
-    "name": "mesas",
+    "name": "ziggurats",
     "srcY": 300,
     "w": 512,
     "h": 140,
-    "y": -132,
+    "y": -140,
     "factor": 0.1,
     "drift": 0,
     "lineScroll": false,
@@ -225,7 +228,7 @@
     "pinTop": false
    },
    {
-    "name": "dunes",
+    "name": "domes",
     "srcY": 520,
     "w": 512,
     "h": 104,
@@ -237,17 +240,17 @@
     "pinTop": false
    },
    {
-    "name": "ridge",
+    "name": "trees",
     "srcY": 624,
     "w": 512,
-    "h": 80,
-    "y": 60,
+    "h": 88,
+    "y": 52,
     "factor": 0.58,
     "drift": 0,
     "lineScroll": false,
     "once": false,
     "pinTop": false,
-    "fillBelow": "#1b1630"
+    "fillBelow": "#140a2e"
    }
   ]
  }

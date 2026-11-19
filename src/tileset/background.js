@@ -19,74 +19,95 @@ const ridge = (terms, tri = false) => (x) => terms.reduce((h, [amp, f, ph]) => {
   return h + amp * (tri ? 1 - 2 * Math.abs(((t % 1) + 1) % 1 - 0.5) * 2 : Math.sin(2 * Math.PI * t));
 }, 0);
 
-function silhouette(h, top, body, edge, edgeC, cap = null) { // top(x) = distance of the surface below the strip top
-  return new Img(W, h, S).map((x, y) => {
-    const t = top(x);
-    if (y < t) return undefined;
-    if (cap && y - t < cap.depth && t < cap.below) return cap.c;
-    return y - t < edge ? edgeC : body;
-  });
+function silhouette(h, top, body, edge, edgeC) { // top(x) = distance of the surface below the strip top
+  return new Img(W, h, S).map((x, y) => { const t = top(x); return y < t ? undefined : y - t < edge ? edgeC : body; });
 }
-function puffs(h, rng, count, rMin, rMax) {
+// --- geometric shape language: prisms, banded domes, lollipop trees, lozenge clouds, towers ---
+function prisms(h, rng, n, light, dark, minH, maxH) { // two-faced pyramids
+  const g = new Img(W, h, S);
+  const list = Array.from({ length: n }, () => ({ x: rng.int(0, W), ph: rng.int(minH, maxH) })).sort((p, q) => p.ph - q.ph);
+  for (const { x, ph } of list) { const w = ph * (0.5 + rng.next() * 0.35); wrapX((o) => g.poly([[x + o - w, h], [x + o, h - ph], [x + o, h]], light).poly([[x + o, h], [x + o, h - ph], [x + o + w, h]], dark)); }
+  return g;
+}
+function ziggurats(h, rng, n, light, dark) { // stepped pyramids
+  const g = new Img(W, h, S);
+  for (let i = 0; i < n; i++) { const x = rng.int(0, W), steps = rng.int(3, 5), sh = rng.int(8, 12); for (let k = 0; k < steps; k++) { const w = (steps - k) * 13; wrapX((o) => g.rect(x + o - w, h - (k + 1) * sh, 2 * w, sh, k % 2 ? dark : light).rect(x + o - w, h - (k + 1) * sh, 2 * w, 2, P.bgFarL)); } }
+  return g;
+}
+function domes(h, rng, n, a, b, gloss, rMin, rMax) { // half-buried spheres with horizontal bands and a glint
+  const g = new Img(W, h, S);
+  for (let i = 0; i < n; i++) {
+    const x = rng.int(0, W), r = rng.int(rMin, rMax), cy = h - r * 0.15;
+    wrapX((o) => { const cx = x + o; g.map((px, py) => ((px - cx) ** 2 + (py - cy) ** 2 <= r * r ? (Math.floor((py - cy + 200) / 5) % 2 ? a : b) : undefined)).disc(cx - r * 0.4, cy - r * 0.55, r * 0.14, gloss); });
+  }
+  return g;
+}
+function lollipops(h, rng, n, stem, ball, shade, gloss) { // row of round stylised trees over a base band
+  const g = new Img(W, h, S).rect(0, h - 10, W, 10, stem);
+  for (let i = 0; i < n; i++) { const x = (i * W) / n + rng.int(-4, 4), r = rng.int(6, 10), top = h - 12 - rng.int(8, 18); wrapX((o) => g.rect(x + o - 1, top, 2, h - top, stem).disc(x + o, top, r, shade).disc(x + o - 1, top - 1, r - 1.5, ball).disc(x + o - r * 0.35, top - r * 0.4, r * 0.22, gloss)); }
+  return g;
+}
+function lozenges(h, rng, count, minW, maxW) { // flat capsule clouds with a shaded underside
   const g = new Img(W, h, S);
   for (let i = 0; i < count; i++) {
-    const x = rng.int(0, W), n = rng.int(2, 4), r0 = rng.int(rMin, rMax);
-    for (let k = 0; k < n; k++) wrapX((o) => g.disc(x + o + k * r0 * 1.1, h - r0 * (k % 2 ? 0.75 : 0.45), r0 * (k % 2 ? 1 : 0.8), P.bgCloud));
+    const x = rng.int(0, W), w = rng.int(minW, maxW), rows = rng.int(2, 3);
+    for (let k = 0; k < rows; k++) { const y = h - 7 - k * 5, ww = w * (1 - k * 0.3), xx = x + k * 4; wrapX((o) => g.disc(xx + o, y + 2.5, 3, P.bgCloud).disc(xx + o + ww, y + 2.5, 3, P.bgCloud).rect(xx + o, y - 0.5, ww, 6.5, P.bgCloud).rect(xx + o, y + 4, ww, 2, P.bgCloudD)); }
   }
-  return g.map((x, y, c) => (c && y > h - 3 ? P.bgCloudD : undefined));
+  return g;
+}
+function towers(h, rng, n) { // skyline with lit windows and beacons
+  const g = new Img(W, h, S);
+  for (let i = 0; i < n; i++) {
+    const x = rng.int(0, W), w = rng.int(12, 26), th = rng.int(h * 0.4, h - 12);
+    wrapX((o) => { g.rect(x + o, h - th, w, th, P.bgFar).rect(x + o, h - th, 2, th, P.bgFarL).rect(x + o + w / 2 - 0.5, h - th - 8, 1, 8, P.bgFarL).disc(x + o + w / 2, h - th - 9, 1.4, P.bgMidL); });
+    for (let wy = h - th + 5; wy < h - 4; wy += 7) for (let wx = 5; wx < w - 3; wx += 5) if (rng.chance(0.55)) { const c = rng.chance(0.3) ? P.bgMidL : P.sun; wrapX((o) => g.rect(x + o + wx, wy, 2, 3, c)); }
+  }
+  return g;
+}
+function water(h, rng) { // banded strip (bands widen toward the viewer) with glints
+  const g = new Img(W, h, S).map((x, y) => (Math.floor(Math.sqrt(y + 1) * 2.2) % 2 ? P.bgWater : P.bgWaterD)).rect(0, 0, W, 1, P.bgWaterL);
+  for (let i = 0; i < h * 4; i++) { const y = rng.int(1, h - 1), x = rng.int(0, W), w = rng.int(3, 6 + y); wrapX((o) => g.rect(x + o, y, w, 1, P.bgWaterL)); }
+  return g;
 }
 function streaks(h, rng, count) { // thin horizontal cloud bars
   const g = new Img(W, h, S);
   for (let i = 0; i < count; i++) { const x = rng.int(0, W), y = rng.int(0, h - 3), w = rng.int(14, 60); wrapX((o) => g.rect(x + o, y, w, 2, P.bgCloud).rect(x + o + 4, y + 2, w - 10, 1, P.bgCloudD)); }
   return g;
 }
-function water(h, rng) {
-  const g = new Img(W, h, S).rect(0, 0, W, h, P.bgWater).rect(0, 0, W, 1, P.bgWaterL);
-  for (let i = 0; i < h * 5; i++) { const y = rng.int(1, h - 1), x = rng.int(0, W), w = rng.int(3, 6 + y); wrapX((o) => g.rect(x + o, y, w, 1, rng.chance(0.5) ? P.bgWaterL : P.bgWaterD)); }
-  return g;
-}
 
 const PAINT = {
-  meadow(rng) {
-    const hills = silhouette(52, (x) => 22 + ridge([[12, 2, 0.1], [6, 5, 0.4]])(x), P.bgMid, 2, P.bgMidL);
-    for (let i = 0; i < 26; i++) { const x = rng.int(0, W), y = rng.int(34, 50); wrapX((o) => hills.disc(x + o, y, rng.int(2, 3), P.bgMidD)); }
+  meadow(rng) { // garden: capsule clouds, pastel prisms, banded domes, lollipop trees
     return [
-      { name: 'clouds-far', img: puffs(22, rng, 9, 4, 6), y: -62, factor: 0.03, drift: 0.06 },
-      { name: 'clouds-near', img: puffs(34, rng, 6, 7, 11), y: -96, factor: 0.06, drift: 0.14 },
-      { name: 'mountains', img: silhouette(70, (x) => 34 + ridge([[22, 3, 0], [10, 7, 0.3], [5, 13, 0.7]], true)(x), P.bgFar, 0, P.bgFar, { c: P.bgFarL, depth: 7, below: 22 }), y: -70, factor: 0.1 },
+      { name: 'clouds-far', img: lozenges(24, rng, 7, 10, 22), y: -62, factor: 0.03, drift: 0.06 },
+      { name: 'clouds-near', img: lozenges(30, rng, 5, 22, 44), y: -98, factor: 0.06, drift: 0.14 },
+      { name: 'prisms', img: prisms(70, rng, 9, P.bgFarL, P.bgFar, 28, 62), y: -70, factor: 0.1 },
       { name: 'water', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
-      { name: 'hills', img: hills, y: 6, factor: 0.4 },
-      { name: 'treeline', img: silhouette(40, (x) => 10 + ridge([[5, 4, 0.2], [3, 19, 0], [2, 31, 0.5]])(x), P.bgNear, 3, P.bgNearD), y: 30, factor: 0.58, fill: P.ink },
+      { name: 'domes', img: domes(52, rng, 7, P.bgMid, P.bgMidL, P.white, 16, 34), y: 6, factor: 0.4 },
+      { name: 'trees', img: lollipops(44, rng, 11, P.bgNearD, P.bgNear, P.bgNearD, P.bgWaterL), y: 26, factor: 0.58, fill: P.ink },
     ];
   },
-  cavern(rng) {
-    const pillars = new Img(W, 150, S);
-    for (let i = 0; i < 9; i++) { const x = rng.int(0, W), w = rng.int(10, 22); wrapX((o) => pillars.rect(x + o, 0, w, 150, P.bgFar).rect(x + o, 0, 2, 150, P.bgFarL).rect(x + o - 3, 0, w + 6, rng.int(8, 20), P.bgFar)); }
-    const stal = new Img(W, 60, S);
-    for (let i = 0; i < 16; i++) { const x = rng.int(0, W), w = rng.int(6, 14), h = rng.int(18, 56); wrapX((o) => stal.poly([[x + o, -1], [x + o + w, -1], [x + o + w / 2, h]], P.bgMidD)); }
-    const mounds = silhouette(56, (x) => 26 + ridge([[10, 3, 0.2], [8, 8, 0.6]], true)(x), P.bgMid, 2, P.bgFarL);
-    for (let i = 0; i < 12; i++) { const x = rng.int(0, W), y = rng.int(20, 40), h = rng.int(6, 12); wrapX((o) => mounds.poly([[x + o - 3, y + h], [x + o, y], [x + o + 3, y + h]], P.bgMidL).poly([[x + o, y + h], [x + o, y], [x + o + 3, y + h]], P.sunL)); }
+  cavern(rng) { // neon: lit skyline, hanging prisms, glowing banded spheres
+    const hang = new Img(W, 60, S);
+    for (let i = 0; i < 14; i++) { const x = rng.int(0, W), w = rng.int(6, 13), h = rng.int(18, 54); wrapX((o) => hang.poly([[x + o - w, -1], [x + o, -1], [x + o, h]], P.bgFarL).poly([[x + o, -1], [x + o + w, -1], [x + o, h]], P.bgMidD)); }
     return [
-      { name: 'pillars', img: pillars, y: -150, factor: 0.06 },
-      { name: 'stalactites', img: stal, y: 0, factor: 0.16, pin: 'top' },
+      { name: 'skyline', img: towers(150, rng, 11), y: -150, factor: 0.06 },
+      { name: 'hanging-prisms', img: hang, y: 0, factor: 0.16, pin: 'top' },
       { name: 'lake', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
-      { name: 'crystal-mounds', img: mounds, y: 6, factor: 0.4 },
-      { name: 'rocks', img: silhouette(40, (x) => 12 + ridge([[7, 5, 0.1], [4, 11, 0.5]], true)(x), P.bgNear, 2, P.bgMidD), y: 30, factor: 0.58, fill: P.ink },
+      { name: 'spheres', img: domes(56, rng, 6, P.bgMid, P.bgMidL, P.sunL, 14, 30), y: 4, factor: 0.4 },
+      { name: 'prisms', img: prisms(44, rng, 12, P.bgFar, P.bgNearD, 14, 36), y: 26, factor: 0.58, fill: P.ink },
     ];
   },
-  dusk(rng) {
+  dusk(rng) { // sunset: banded sun, cloud bars, stepped pyramids, striped domes
     const sun = new Img(W, 80, S).disc(170, 44, 30, P.sun).disc(170, 44, 24, P.sunL);
     for (let k = 0; k < 5; k++) sun.map((x, y, c) => (c && Math.abs(y - (52 + k * 6)) < 1 + k * 0.4 ? 0 : undefined)); // banded lower half
-    const mesa = (x) => { const r = ridge([[16, 2, 0.15], [9, 5, 0.6]], true)(x); return 30 + Math.round(r / 9) * 9; }; // stepped tops
-    const dunes = silhouette(52, (x) => 24 + ridge([[11, 2, 0.6], [5, 6, 0.1]])(x), P.bgMid, 2, P.bgMidL);
     return [
       { name: 'sun', img: sun, y: -104, factor: 0, once: true },
       { name: 'streaks-far', img: streaks(40, rng, 14), y: -74, factor: 0.03, drift: 0.05 },
       { name: 'streaks-near', img: streaks(30, rng, 9), y: -100, factor: 0.07, drift: 0.12 },
-      { name: 'mesas', img: silhouette(70, mesa, P.bgFar, 2, P.bgFarL), y: -66, factor: 0.1 },
+      { name: 'ziggurats', img: ziggurats(70, rng, 4, P.bgFarL, P.bgFar), y: -70, factor: 0.1 },
       { name: 'sea', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
-      { name: 'dunes', img: dunes, y: 6, factor: 0.4 },
-      { name: 'ridge', img: silhouette(40, (x) => 10 + ridge([[6, 3, 0.3], [3, 9, 0.8]], true)(x), P.bgNear, 3, P.bgNearD), y: 30, factor: 0.58, fill: P.ink },
+      { name: 'domes', img: domes(52, rng, 6, P.bgMid, P.bgMidL, P.sunL, 16, 32), y: 6, factor: 0.4 },
+      { name: 'trees', img: lollipops(44, rng, 9, P.bgNearD, P.bgNear, P.bgNearD, P.bgMidL), y: 26, factor: 0.58, fill: P.ink },
     ];
   },
 };

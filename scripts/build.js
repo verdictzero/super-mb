@@ -23,7 +23,7 @@ const atlas = atlasImage(ts);
 for (const theme of Object.keys(THEMES)) {
   out(`assets/tileset-${theme}.png`, encodePNG(atlas.w, atlas.h, toRGBA(atlas, theme)));
   // contact sheet on the theme's sky colour, for the README
-  const rgba = toRGBA(atlas, theme), sky = THEMES[theme].sky[0];
+  const rgba = toRGBA(atlas, theme), sky = THEMES[theme].sky[1];
   for (let i = 0; i < rgba.length; i += 4) if (!rgba[i + 3]) { rgba[i] = parseInt(sky.slice(1, 3), 16); rgba[i + 1] = parseInt(sky.slice(3, 5), 16); rgba[i + 2] = parseInt(sky.slice(5, 7), 16); rgba[i + 3] = 255; }
   out(`docs/tileset-${theme}.png`, encodePNG(atlas.w, atlas.h, rgba));
 }

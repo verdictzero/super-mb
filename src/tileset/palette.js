@@ -25,71 +25,84 @@ export const SLOTS = [
 ];
 export const P = Object.fromEntries(SLOTS.map((n, i) => [n, i]));
 
+// Look: saturated, high-contrast colour pairs, glossy highlights and banded gradient skies,
+// in the spirit of mid-90s 32-bit arcade platformers. Each theme pairs a patterned soil colour
+// with a two-colour striped edge (grass / grassD) and a contrasting ceiling stripe (ceil / ceilL).
 const base = {
-  ink: '#1b1630',
-  white: '#fbfbf4', cloudD: '#c9d8f0',
-  goldD: '#b5651d', gold: '#f2a71b', goldL: '#ffe17a',
-  redD: '#9c1f3a', red: '#e8404e',
-  gemD: '#1479a8', gem: '#35c6e8', gemL: '#d2fbff',
-  steelD: '#56607a', steel: '#9aa6bf', steelL: '#e6ecf7',
-  heroD: '#a3371c', hero: '#f26b2b', heroL: '#ffc27a',
-  foeD: '#4a2b6b', foe: '#8a52b8', foeL: '#d3a8f0',
-  yellow: '#ffe14a', orange: '#f58a1f',
-  woodD: '#6e3f22', wood: '#a8683a', woodL: '#d69a5c',
+  ink: '#140a2e',
+  white: '#ffffff', cloudD: '#b8dcff',
+  goldD: '#d85a00', gold: '#ffb400', goldL: '#fff27a',
+  redD: '#a8004e', red: '#ff2a6a',
+  gemD: '#0a6ae0', gem: '#2ad8ff', gemL: '#e0ffff',
+  steelD: '#4a5a9a', steel: '#9ab0f0', steelL: '#f0f6ff',
+  heroD: '#b8220a', hero: '#ff5a1a', heroL: '#ffd070',
+  foeD: '#4a1a9a', foe: '#9a4aff', foeL: '#e0b0ff',
+  yellow: '#fff03a', orange: '#ff8a1a',
+  woodD: '#7a2a5a', wood: '#d0508a', woodL: '#ffa0c0',
 };
 
 export const THEMES = {
   meadow: {
-    label: 'Meadow', sky: ['#58b4f5', '#bfe6fb'],
+    label: 'Garden', sky: ['#1a4ae0', '#3ab8ff', '#ffc8f0'],
     colors: { ...base,
-      dirtD: '#a04a22', dirt: '#c9682e', dirtL: '#e89655', dirtX: '#72301a',
-      grassL: '#b4ec5a', grass: '#52b83a', grassD: '#256e33',
-      rimL: '#f0b071', rimD: '#5c2716',
-      brickD: '#7a2f24', brick: '#c2543a', brickL: '#eb8a62',
-      stoneD: '#6b5a52', stone: '#a8958a', stoneL: '#ddd0c4',
-      pipeD: '#2d3a94', pipe: '#4f6fe0', pipeL: '#a9c2ff',
-      bushD: '#1f7a4a', bush: '#3fb665', bushL: '#9ae88a',
-      hillD: '#3d9a6e', hill: '#6fca8c',
-      bgFar: '#8fc6f2', bgFarL: '#e8f6ff', bgMid: '#4fae7a', bgMidL: '#8fdc8a', bgMidD: '#2f8a62', bgNear: '#2f9a4a', bgNearD: '#1f7a40',
-      bgWater: '#3f8fe0', bgWaterL: '#bfe6ff', bgWaterD: '#2f6fc0', sun: '#fff6c2', sunL: '#ffffff', bgCloud: '#ffffff', bgCloudD: '#cfe4f7',
-      ceilL: '#b8743c', ceil: '#7d3f20', ceilD: '#4a2414',
+      dirtX: '#4a1a8a', dirtD: '#7a2ac0', dirt: '#b050f0', dirtL: '#f0a8ff',
+      grassL: '#fbffc0', grass: '#b0f828', grassD: '#10b870',
+      rimL: '#ffd8ff', rimD: '#2a0a5a',
+      brickD: '#c83a10', brick: '#ff7a28', brickL: '#ffd080',
+      stoneD: '#5068b0', stone: '#98b0f0', stoneL: '#eef4ff',
+      pipeD: '#0878c0', pipe: '#28c8f8', pipeL: '#c0faff',
+      bushD: '#089868', bush: '#28e088', bushL: '#c0ffb8',
+      hillD: '#10a088', hill: '#30d0a0',
+      bgFar: '#7898ff', bgFarL: '#d0e0ff', bgMid: '#28d0a0', bgMidL: '#b8ffc8', bgMidD: '#0e9c88', bgNear: '#1870d0', bgNearD: '#0a4898',
+      bgWater: '#3088ff', bgWaterL: '#c8f4ff', bgWaterD: '#1858e0', sun: '#fff6c2', sunL: '#ffffff', bgCloud: '#ffffff', bgCloudD: '#a8d0ff',
+      ceilL: '#ffe870', ceil: '#ff9a28', ceilD: '#b84810',
     },
   },
   cavern: {
-    label: 'Cavern', sky: ['#0d1026', '#1b2145'],
+    label: 'Neon', sky: ['#04031a', '#18084a', '#5a1890'],
     colors: { ...base,
-      dirtD: '#2c3f7a', dirt: '#4160a8', dirtL: '#6f92d6', dirtX: '#1a2550',
-      grassL: '#b7fff0', grass: '#3fd6c0', grassD: '#177a80',
-      rimL: '#8fb0ee', rimD: '#121a3d',
-      brickD: '#233063', brick: '#3f5aa3', brickL: '#7d9be0',
-      stoneD: '#3b4460', stone: '#6c7896', stoneL: '#b4bfd9',
-      pipeD: '#7a2b62', pipe: '#c94f9a', pipeL: '#ffaedb',
-      bushD: '#1c5c6e', bush: '#2f93a0', bushL: '#7fe0d8',
-      hillD: '#1d2752', hill: '#2a3870',
-      bgFar: '#1a2350', bgFarL: '#2c3a78', bgMid: '#24306a', bgMidL: '#4fd6c8', bgMidD: '#161d48', bgNear: '#101638', bgNearD: '#0a0e26',
-      bgWater: '#14506e', bgWaterL: '#5fe8e0', bgWaterD: '#0e3450', sun: '#5fe8e0', sunL: '#d2fbff', bgCloud: '#232d62', bgCloudD: '#1a2350',
-      ceilL: '#7ff0e4', ceil: '#2390a0', ceilD: '#0f3a56',
-      cloudD: '#2a3870', white: '#3d4f8f',
+      dirtX: '#050f2c', dirtD: '#0c2860', dirt: '#1848a0', dirtL: '#38a8f8',
+      grassL: '#f0ffff', grass: '#18f0e0', grassD: '#f018c0',
+      rimL: '#80c8ff', rimD: '#02061a',
+      brickD: '#5a189a', brick: '#a040f8', brickL: '#e4a8ff',
+      stoneD: '#26386c', stone: '#5878c0', stoneL: '#b8d0ff',
+      pipeD: '#a01868', pipe: '#f838a0', pipeL: '#ffb8e4',
+      bushD: '#086878', bush: '#18c0c0', bushL: '#a8fff0',
+      hillD: '#200a5a', hill: '#3a1a8a',
+      bgFar: '#181860', bgFarL: '#4848c8', bgMid: '#3a1890', bgMidL: '#f038c0', bgMidD: '#1e0a58', bgNear: '#0a0a3c', bgNearD: '#05052a',
+      bgWater: '#102a90', bgWaterL: '#18f0e0', bgWaterD: '#0a1858', sun: '#18f0e0', sunL: '#f0ffff', bgCloud: '#2a2a80', bgCloudD: '#181860',
+      ceilL: '#fff03a', ceil: '#f88018', ceilD: '#782808',
+      white: '#e8f0ff', cloudD: '#6878c8',
     },
   },
   dusk: {
-    label: 'Dusk', sky: ['#3b2a6e', '#f29a6b'],
+    label: 'Sunset', sky: ['#38188c', '#f03c8c', '#ffc23a'],
     colors: { ...base,
-      dirtD: '#5b3a6e', dirt: '#84559a', dirtL: '#b785c4', dirtX: '#38224a',
-      grassL: '#ffe58a', grass: '#f2a03a', grassD: '#a8502a',
-      rimL: '#d2a2dc', rimD: '#2a1838',
-      brickD: '#6e2a4a', brick: '#b0486a', brickL: '#e88a9a',
-      stoneD: '#4f4a6b', stone: '#8a84a8', stoneL: '#cfc9e6',
-      pipeD: '#1f6a6e', pipe: '#35aaa6', pipeL: '#a2f0e0',
-      bushD: '#7a3a4a', bush: '#c2603a', bushL: '#f5b05a',
-      hillD: '#5a3a7e', hill: '#7a52a0',
-      bgFar: '#7a4a8e', bgFarL: '#b06a9a', bgMid: '#5a3478', bgMidL: '#8a4f8e', bgMidD: '#44265e', bgNear: '#3a2052', bgNearD: '#2a1640',
-      bgWater: '#d9706a', bgWaterL: '#ffd08a', bgWaterD: '#a8506e', sun: '#ffd27a', sunL: '#fff2c2', bgCloud: '#f2a08a', bgCloudD: '#c9708a',
-      ceilL: '#e88a9a', ceil: '#6e3a72', ceilD: '#2a1838',
-      white: '#ffd9c2', cloudD: '#e89a9a',
+      dirtX: '#064048', dirtD: '#0a7078', dirt: '#18a8a0', dirtL: '#88f4d4',
+      grassL: '#fffac8', grass: '#ffc818', grassD: '#f05828',
+      rimL: '#c8fff0', rimD: '#02262c',
+      brickD: '#8a1860', brick: '#e83c94', brickL: '#ffa8cc',
+      stoneD: '#58387c', stone: '#9a78c8', stoneL: '#e4d4fc',
+      pipeD: '#3828b8', pipe: '#6c60f8', pipeL: '#c8c8ff',
+      bushD: '#b03818', bush: '#f47c28', bushL: '#ffd878',
+      hillD: '#4a1a7a', hill: '#6a2a9a',
+      bgFar: '#a038a4', bgFarL: '#f884c4', bgMid: '#6a2aa0', bgMidL: '#c864d8', bgMidD: '#481a7c', bgNear: '#2a1064', bgNearD: '#1a0a4a',
+      bgWater: '#f06850', bgWaterL: '#ffe490', bgWaterD: '#c03c7c', sun: '#ffe470', sunL: '#fffcd8', bgCloud: '#ffa070', bgCloudD: '#e45c8c',
+      ceilL: '#c8c8ff', ceil: '#6c60f8', ceilD: '#28188c',
+      white: '#fff0e4', cloudD: '#f4a4b4',
     },
   },
 };
+
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+// The sky is drawn as discrete colour bands through the theme's three stops (no smooth blend).
+export function skyBands(themeName, n = 18) {
+  const stops = (THEMES[themeName] || THEMES.meadow).sky.map(rgb);
+  return Array.from({ length: n }, (_, i) => {
+    const t = (i / (n - 1)) * (stops.length - 1), k = Math.min(stops.length - 2, Math.floor(t)), f = t - k;
+    return stops[k].map((v, c) => Math.round(v + (stops[k + 1][c] - v) * f));
+  });
+}
 
 export function themeRGBA(themeName) {
   const t = THEMES[themeName] || THEMES.meadow;

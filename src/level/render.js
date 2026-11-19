@@ -1,5 +1,5 @@
 // Flat RGBA render of a whole level (used for PNG previews and the minimap).
-import { themeRGBA, THEMES } from '../tileset/palette.js';
+import { themeRGBA, skyBands } from '../tileset/palette.js';
 import { TILE as T } from '../core/units.js';
 import { buildBackground, layoutBackground, HORIZON_ABOVE_GROUND } from '../tileset/background.js';
 
@@ -10,10 +10,9 @@ export function renderLevel(ts, level, theme = level.theme) {
   const W = level.width * T, H = level.height * T;
   const out = new Uint8ClampedArray(W * H * 4);
   const pal = themeRGBA(theme);
-  const hex = (s) => [1, 3, 5].map((i) => parseInt(s.slice(i, i + 2), 16));
-  const [top, bot] = THEMES[theme].sky.map(hex);
+  const bands = skyBands(theme);
   for (let y = 0; y < H; y++) {
-    const t = y / (H - 1), c = top.map((v, i) => Math.round(v + (bot[i] - v) * t));
+    const c = bands[Math.min(bands.length - 1, Math.floor((y / H) * bands.length))];
     for (let x = 0; x < W; x++) { const o = (y * W + x) * 4; out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255; }
   }
   // parallax layers, flattened (no scrolling in a still image)
