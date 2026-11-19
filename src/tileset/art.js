@@ -2,8 +2,10 @@
 // drawn with code so the whole sheet can be re-coloured per theme.
 import { Img } from './img.js';
 import { P } from './palette.js';
+import { TILE, S } from '../core/units.js';
 
-const T = () => new Img(16, 16);
+// tiles are drawn on a 16-unit design grid and rasterised at S pixels per unit
+const T = () => new Img(16, 16, S);
 
 function brick() {
   const t = T().rect(0, 0, 16, 16, P.brick);
@@ -22,9 +24,12 @@ function bevel(base, light, dark) {
 function rivets(t, c) { for (const [x, y] of [[3, 3], [12, 3], [3, 12], [12, 12]]) t.set(x, y, c); return t; }
 function bonus() {
   const t = rivets(bevel(P.gold, P.goldL, P.goldD), P.goldD);
-  const star = ['....#....', '...###...', '#########', '.#######.', '..#####..', '.###.###.', '.#.....#.'];
-  t.art(4, 5, star, { '#': P.goldD }).art(3, 4, star, { '#': P.white });
-  return t;
+  // regular five-point star: alternate outer and inner vertices every 36 degrees
+  const star = (cx, cy, R) => Array.from({ length: 10 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? R * 0.45 : R;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  });
+  return t.poly(star(8, 8.6, 5.3), P.goldD).poly(star(7.5, 8.1, 5.3), P.white);
 }
 function used() { return rivets(bevel(P.wood, P.woodL, P.woodD), P.ink); }
 function hard() {
@@ -33,7 +38,7 @@ function hard() {
   return t;
 }
 function pipe() { // 2x2 tiles: lip on top, repeatable body below
-  const g = new Img(32, 32);
+  const g = new Img(32, 32, S);
   const tube = (x, y, w, h) => {
     g.rect(x, y, w, h, P.ink).rect(x + 1, y, w - 2, h, P.pipe);
     g.rect(x + 3, y, 3, h, P.pipeL).vline(x + 8, y, h, P.pipeL).rect(x + w - 8, y, 5, h, P.pipeD);
@@ -58,9 +63,9 @@ function bridge() {
 }
 function spikes() {
   const t = T();
-  for (let s = 0; s < 4; s++) for (let y = 0; y < 10; y++) {
-    const half = y < 3 ? 0 : y < 7 ? 1 : 2, cx = s * 4 + 1;
-    for (let x = cx - half + (half ? 1 : 0); x <= cx + half + 1 - (half ? 0 : 1); x++) t.set(x, 6 + y, x <= cx ? P.steelL : P.steel);
+  for (let s = 0; s < 4; s++) {
+    const x = s * 4 - 0.5;
+    t.poly([[x + 0.3, 15.5], [x + 2, 5.5], [x + 3.7, 15.5]], P.steel).poly([[x + 0.3, 15.5], [x + 2, 5.5], [x + 2, 15.5]], P.steelL);
   }
   return t.hline(0, 15, 16, P.steelD).outline(P.ink);
 }
@@ -78,45 +83,42 @@ function booster() { // points right; flipped for left
   return t;
 }
 function gem() {
-  return T().art(3, 2, [
-    '...oooo...', '..oLLggo..', '.oLLggggo.', 'oLLgggggdo', 'oLggggggdo', 'oggggggddo',
-    'oggggggddo', '.oggggddo.', '..oggddo..', '...oddo...', '....oo....',
-  ], { o: P.ink, L: P.gemL, g: P.gem, d: P.gemD });
+  const t = T();
+  t.poly([[5.5, 1.5], [9.5, 1.5], [13.5, 5.5], [13.5, 7.5], [7.5, 13.8], [1.5, 7.5], [1.5, 5.5]], P.ink);
+  t.poly([[6, 2.6], [9, 2.6], [12.4, 6], [12.4, 7.2], [7.5, 12.3], [2.6, 7.2], [2.6, 6]], P.gem);
+  t.poly([[6, 2.6], [7.5, 2.6], [5.5, 7], [2.6, 7], [2.6, 6]], P.gemL);
+  t.poly([[9.5, 7], [12.4, 7], [7.5, 12.3], [7.5, 10]], P.gemD);
+  return t;
 }
 function goal() { // pole sits left of centre so the pennant fits in the same column
   const shaft = (t, y) => t.rect(4, y, 2, 16 - y, P.steel).vline(4, y, 16 - y, P.steelL).vline(3, y, 16 - y, P.ink).vline(6, y, 16 - y, P.ink);
   const pole = shaft(T(), 0);
   const top = shaft(T(), 8).disc(4.5, 5, 3.6, P.ink).disc(4.5, 5, 2.6, P.gold).set(4, 4, P.goldL);
   const flag = shaft(T(), 0);
-  for (let y = 0; y < 11; y++) { const w = 9 - Math.round(Math.abs(y - 5) * 1.6); flag.hline(7, 2 + y, w, y < 5 ? P.red : P.redD); }
-  flag.disc(9.5, 7, 1.2, P.yellow);
+  flag.poly([[6.5, 1.5], [15.5, 7], [6.5, 12.5]], P.ink).poly([[7, 2.6], [14, 7], [7, 7]], P.red).poly([[7, 7], [14, 7], [7, 11.4]], P.redD);
+  flag.disc(9, 7, 1.2, P.yellow);
   return { pole, top, flag };
 }
 function cloud() {
-  const g = new Img(48, 32);
+  const g = new Img(48, 32, S);
   g.disc(12, 21, 8, P.white).disc(24, 14, 11, P.white).disc(36, 20, 9, P.white).rect(10, 20, 28, 9, P.white);
-  for (let y = 23; y < 32; y++) for (let x = 0; x < 48; x++) if (g.get(x, y) && (y > 25 || (x + y) % 2)) g.set(x, y, P.cloudD);
-  return g;
+  return g.map((x, y, c, i, j) => (c && y > 22.5 && (y > 25.5 || ((i >> 1) + (j >> 1)) % 2) ? P.cloudD : undefined));
 }
 function bush() {
-  const g = new Img(48, 16);
+  const g = new Img(48, 16, S);
   g.disc(10, 16, 8, P.bush).disc(24, 14, 11, P.bush).disc(38, 16, 8, P.bush);
   g.disc(8, 13, 3, P.bushL).disc(21, 9, 4, P.bushL).disc(37, 13, 3, P.bushL);
-  for (let x = 0; x < 48; x++) if (g.get(x, 15)) g.set(x, 15, P.bushD);
-  return g.outline(P.bushD);
+  return g.map((x, y, c) => (c && y > 14.5 ? P.bushD : undefined)).outline(P.bushD);
 }
 function bgHill() {
-  const g = new Img(80, 48);
-  for (let x = 0; x < 80; x++) {
-    const top = Math.round(48 - 44 * Math.sin((Math.PI * (x + 0.5)) / 80) ** 0.7);
-    for (let y = top; y < 48; y++) g.set(x, y, y - top < 2 ? P.hillD : P.hill);
-  }
-  for (const [x, y] of [[30, 16], [46, 24], [24, 32], [56, 36], [40, 40]]) g.rect(x, y, 3, 2, P.hillD);
+  const g = new Img(80, 48, S);
+  g.map((x, y) => { const top = 48 - 44 * Math.sin((Math.PI * (x + 0.5)) / 80) ** 0.7; return y + 0.5 < top ? undefined : y + 0.5 - top < 2 ? P.hillD : P.hill; });
+  for (const [x, y] of [[30, 16], [46, 24], [24, 32], [56, 36], [40, 40]]) g.disc(x, y, 1.5, P.hillD);
   return g;
 }
 function hero(roll) {
   const t = T().disc(7.5, 7.5, 7.6, P.ink).disc(7.5, 7.5, 6.5, P.hero);
-  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (t.get(x, y) === P.hero && x + y > 20) t.set(x, y, P.heroD);
+  t.map((x, y, c) => (c === P.hero && (x - 4.5) ** 2 + (y - 4.5) ** 2 > 60 ? P.heroD : undefined)); // crescent shadow
   t.disc(5, 4.5, 1.6, P.heroL);
   if (roll) { t.rect(1, 7, 14, 2, P.heroL).rect(7, 1, 2, 14, P.heroL).set(7, 7, P.ink).set(8, 8, P.ink); }
   else { t.rect(8, 5, 2, 4, P.white).rect(12, 5, 2, 4, P.white).rect(9, 6, 1, 2, P.ink).rect(13, 6, 1, 2, P.ink); t.hline(9, 11, 4, P.heroD); }
@@ -124,22 +126,22 @@ function hero(roll) {
 }
 function walker(step) {
   const t = T().disc(7.5, 9, 6.4, P.foe);
-  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (t.get(x, y) && (y > 12 || y < 3)) t.set(x, y, 0);
+  t.map((x, y, c) => (c && (y > 12.5 || y < 2.5) ? 0 : undefined));
   t.disc(5, 6, 1.5, P.foeL).hline(2, 12, 12, P.foeD);
   t.rect(4, 7, 3, 3, P.white).rect(9, 7, 3, 3, P.white).set(5, 8, P.ink).set(10, 8, P.ink).hline(3, 6, 4, P.foeD).hline(9, 6, 4, P.foeD);
   if (step) t.rect(2, 13, 4, 2, P.orange).rect(9, 13, 4, 2, P.orange); else t.rect(3, 13, 4, 2, P.orange).rect(10, 13, 4, 2, P.orange);
   return t.outline(P.ink);
 }
 
-const FULL = new Array(16).fill(0xffff);
-const rows = (from, to) => FULL.map((_, y) => (y >= from && y <= to ? 0xffff : 0));
+const FULL = new Array(TILE).fill(0xffffffff);
+const rows = (from, to) => FULL.map((_, y) => (y >= from * S && y < (to + 1) * S ? 0xffffffff : 0)); // rows on the design grid
 
 // Returns [name, img, meta] triples in atlas order.
 export function handTiles() {
   const out = [];
   const add = (name, img, meta) => out.push([name, img, meta]);
   const slice = (prefix, g, meta) => {
-    for (let r = 0; r < g.h / 16; r++) for (let c = 0; c < g.w / 16; c++) add(`${prefix}_${c}_${r}`, g.sub(c * 16, r * 16, 16, 16), meta);
+    for (let r = 0; r < g.h / TILE; r++) for (let c = 0; c < g.w / TILE; c++) add(`${prefix}_${c}_${r}`, g.sub(c * TILE, r * TILE, TILE, TILE), meta);
   };
   const block = (b) => ({ kind: 'block', block: b, mask: FULL });
   add('brick', brick(), block('brick'));

@@ -20,15 +20,15 @@ const ts = buildTileset();
 const atlas = atlasImage(ts);
 for (const theme of Object.keys(THEMES)) {
   out(`assets/tileset-${theme}.png`, encodePNG(atlas.w, atlas.h, toRGBA(atlas, theme)));
-  // 3x contact sheet on the theme's sky colour, for the README
+  // contact sheet on the theme's sky colour, for the README
   const rgba = toRGBA(atlas, theme), sky = THEMES[theme].sky[0];
   for (let i = 0; i < rgba.length; i += 4) if (!rgba[i + 3]) { rgba[i] = parseInt(sky.slice(1, 3), 16); rgba[i + 1] = parseInt(sky.slice(3, 5), 16); rgba[i + 2] = parseInt(sky.slice(5, 7), 16); rgba[i + 3] = 255; }
-  out(`docs/tileset-${theme}.png`, encodePNG(atlas.w, atlas.h, rgba, 3));
+  out(`docs/tileset-${theme}.png`, encodePNG(atlas.w, atlas.h, rgba));
 }
 out('assets/tileset.tsj', json(tilesetToTiled(ts, 'tileset-meadow.png', atlas.w, atlas.h)));
 // engine-side metadata: collision masks, angles, autotile table, prefab stamps
 out('assets/tileset.json', json({
-  tileSize: 16, columns: ts.columns,
+  tileSize: ts.tileSize, columns: ts.columns,
   tiles: ts.tiles.map((t) => t && { id: t.id, name: t.name, kind: t.kind, block: t.block, path: t.path, mask: t.mask, ang: t.ang }),
   names: ts.names, ground: Array.from(ts.ground),
   prefabs: Object.fromEntries(Object.entries(ts.prefabs).map(([k, p]) => [k, { w: p.w, h: p.h, colOff: p.colOff, rowOff: p.rowOff, width: p.width, dy: p.dy, cliff: p.cliff, cells: p.cells, objects: p.objects }])),

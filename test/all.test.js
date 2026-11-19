@@ -7,6 +7,7 @@ import { levelToTiled, levelFromTiled } from '../src/level/tiled.js';
 import { playtest } from '../src/engine/bot.js';
 import { Sim } from '../src/engine/sim.js';
 import { LevelBuilder } from '../src/level/builder.js';
+import { TILE } from '../src/core/units.js';
 
 const ts = buildTileset();
 
@@ -33,7 +34,7 @@ for (const name of ['loop6', 'loop10']) {
     const L = level.objects.find((o) => o.type === 'loop');
     const { sim, topped } = runRight(level, 400);
     assert.ok(topped, 'was upside down on the ceiling');
-    assert.ok(sim.p.x > L.x + L.w + 16, 'exited to the right');
+    assert.ok(sim.p.x > L.x + L.w + TILE, 'exited to the right');
     assert.equal(sim.p.path, 'B');
   });
 }
@@ -44,14 +45,14 @@ test('loop10: from a standing start you slide back down instead of clipping thro
   let topped = false;
   for (let i = 0; i < 240; i++) { sim.step({ right: true }); if (sim.p.grounded && sim.p.ang > 150 && sim.p.ang < 210) topped = true; }
   assert.ok(!topped);
-  assert.ok(sim.p.x < L.x + L.w && sim.p.y < L.y + L.h + 8 && !sim.p.dead);
+  assert.ok(sim.p.x < L.x + L.w && sim.p.y < L.y + L.h + TILE / 2 && !sim.p.dead);
 });
 test('quarter pipe launches a fast runner upward', () => {
   const level = track((b) => b.runUp(6).piece('qp_up'));
   const sim = new Sim(ts, level);
   let minY = Infinity;
   for (let i = 0; i < 200; i++) { sim.step({ right: true }); minY = Math.min(minY, sim.p.y); }
-  assert.ok(minY < level.spawn.y - 80, `peak ${level.spawn.y - minY}px above start`);
+  assert.ok(minY < level.spawn.y - 5 * TILE, `peak ${level.spawn.y - minY}px above start`);
 });
 
 for (const e of EXAMPLES) test(`example ${e.id} is completable`, () => { const r = playtest(ts, e.build(ts)); assert.ok(r.ok, JSON.stringify(r)); });

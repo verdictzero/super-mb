@@ -6,11 +6,12 @@ import { generateLevel } from '../level/generator.js';
 import { renderLevel, objectTile } from '../level/render.js';
 import { Sim } from '../engine/sim.js';
 import { Bot } from '../engine/bot.js';
+import { TILE as T } from '../core/units.js';
 
 const $ = (id) => document.getElementById(id);
 const ts = buildTileset();
 const atlasIdx = atlasImage(ts);
-const VW = 400, VH = 225;
+const VW = 25 * T, VH = Math.round((25 * T * 9) / 16), COLS = 25, ROWS = Math.ceil(VH / T);
 
 function canvasFrom(w, h, rgba) {
   const c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -25,14 +26,15 @@ const overlay = (() => {
   for (let id = 1; id < ts.tiles.length; id++) {
     const t = ts.tiles[id]; if (!t.mask) continue;
     const col = t.path === 'A' ? [60, 160, 255] : t.path === 'B' ? [255, 90, 200] : t.kind === 'hazard' ? [255, 60, 60] : t.kind === 'oneway' ? [255, 220, 60] : [255, 255, 255];
-    const ox = ((id - 1) % ts.columns) * 16, oy = Math.floor((id - 1) / ts.columns) * 16;
-    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if ((t.mask[y] >> x) & 1) rgba.set([...col, 150], ((oy + y) * atlasIdx.w + ox + x) * 4);
+    const ox = ((id - 1) % ts.columns) * T, oy = Math.floor((id - 1) / ts.columns) * T;
+    for (let y = 0; y < T; y++) for (let x = 0; x < T; x++) if ((t.mask[y] >>> x) & 1) rgba.set([...col, 150], ((oy + y) * atlasIdx.w + ox + x) * 4);
   }
   return canvasFrom(atlasIdx.w, atlasIdx.h, rgba);
 })();
 
 const state = { level: null, sim: null, bot: new Bot(), useBot: true, showCol: false, sheetTheme: 'meadow', cam: { x: 0, y: 0 }, wait: 0, keys: {} };
 const game = $('game'), g = game.getContext('2d');
+game.width = VW; game.height = VH;
 g.imageSmoothingEnabled = false;
 
 function load(level) {
@@ -45,20 +47,20 @@ function load(level) {
   mini.getContext('2d').putImageData(new ImageData(im.rgba, im.w, im.h), 0, 0);
 }
 
-function drawTile(sheet, id, x, y) { if (id) g.drawImage(sheet, ((id - 1) % ts.columns) * 16, Math.floor((id - 1) / ts.columns) * 16, 16, 16, x, y, 16, 16); }
+function drawTile(sheet, id, x, y) { if (id) g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, x, y, T, T); }
 
 function draw() {
   const { level, sim, cam } = state, p = sim.p, sheet = atlasFor(level.theme);
-  cam.x += (Math.max(0, Math.min(level.width * 16 - VW, p.x - VW * 0.42)) - cam.x) * 0.2;
-  cam.y += (Math.max(0, Math.min(level.height * 16 - VH, p.y - VH * 0.58)) - cam.y) * 0.12;
+  cam.x += (Math.max(0, Math.min(level.width * T - VW, p.x - VW * 0.42)) - cam.x) * 0.2;
+  cam.y += (Math.max(0, Math.min(level.height * T - VH, p.y - VH * 0.58)) - cam.y) * 0.12;
   const cx = Math.round(cam.x), cy = Math.round(cam.y);
   const sky = g.createLinearGradient(0, 0, 0, VH);
   sky.addColorStop(0, THEMES[level.theme].sky[0]); sky.addColorStop(1, THEMES[level.theme].sky[1]);
   g.fillStyle = sky; g.fillRect(0, 0, VW, VH);
-  const x0 = cx >> 4, y0 = cy >> 4, front = [];
-  for (let ty = y0; ty <= y0 + 15; ty++) for (let tx = x0; tx <= x0 + 25; tx++) {
+  const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T), front = [];
+  for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;
-    const i = ty * level.width + tx, X = tx * 16 - cx, Y = ty * 16 - cy;
+    const i = ty * level.width + tx, X = tx * T - cx, Y = ty * T - cy;
     drawTile(sheet, level.decor[i], X, Y);
     const id = sim.terrain[i];
     if (!id) continue;
@@ -70,33 +72,33 @@ function draw() {
     if (!o.alive) continue;
     let name = objectTile(o);
     if (o.type === 'walker') name = `walker_${(sim.frame >> 3) & 1}`;
-    if (name) drawTile(sheet, ts.names[name], Math.round(o.x) - cx, o.y - cy + (o.type === 'gem' ? Math.round(Math.sin((sim.frame + o.x) / 12)) : 0));
+    if (name) drawTile(sheet, ts.names[name], Math.round(o.x) - cx, o.y - cy + (o.type === 'gem' ? Math.round((T / 16) * Math.sin(sim.frame / 12 + o.x / T)) : 0));
   }
   if (!p.dead) {
-    const rolling = !p.grounded || Math.abs(p.gsp) > 4.5;
+    const rolling = !p.grounded || Math.abs(p.gsp) > 0.28 * T;
     const id = ts.names[rolling ? 'hero_roll' : 'hero'];
     g.save();
     g.translate(Math.round(p.x) - cx, Math.round(p.y) - cy);
     if (rolling) g.rotate(p.spin); else { g.rotate((-p.ang * Math.PI) / 180); if (p.face < 0) g.scale(-1, 1); }
-    g.drawImage(sheet, ((id - 1) % ts.columns) * 16, Math.floor((id - 1) / ts.columns) * 16, 16, 16, -8, -8, 16, 16);
+    g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, -T / 2, -T / 2, T, T);
     g.restore();
   }
   for (const [id, X, Y] of front) drawTile(sheet, id, X, Y);
-  if (state.showCol) for (let ty = y0; ty <= y0 + 15; ty++) for (let tx = x0; tx <= x0 + 25; tx++) {
+  if (state.showCol) for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;
-    drawTile(overlay, sim.terrain[ty * level.width + tx], tx * 16 - cx, ty * 16 - cy);
+    drawTile(overlay, sim.terrain[ty * level.width + tx], tx * T - cx, ty * T - cy);
   }
   if (p.won || p.dead) {
-    g.fillStyle = 'rgba(27,22,48,.55)'; g.fillRect(0, 96, VW, 32);
-    g.fillStyle = '#fff'; g.font = '700 16px "Pixelify Sans", sans-serif'; g.textAlign = 'center';
-    g.fillText(p.won ? 'Goal!' : 'Try again', VW / 2, 118);
+    g.fillStyle = 'rgba(27,22,48,.55)'; g.fillRect(0, VH / 2 - T, VW, 2 * T);
+    g.fillStyle = '#fff'; g.font = `700 ${T}px "Pixelify Sans", sans-serif`; g.textAlign = 'center';
+    g.fillText(p.won ? 'Goal!' : 'Try again', VW / 2, VH / 2 + T / 3);
   }
   $('hudGems').textContent = p.gems;
-  $('hudSpeed').textContent = Math.abs(p.grounded ? p.gsp : Math.hypot(p.xsp, p.ysp)).toFixed(1);
+  $('hudSpeed').textContent = (Math.abs(p.grounded ? p.gsp : Math.hypot(p.xsp, p.ysp)) * (16 / T)).toFixed(1);
   $('hudAngle').textContent = Math.round(p.ang);
   $('hudPath').textContent = p.path;
   $('hudState').textContent = state.useBot ? 'bot playing' : 'you are playing';
-  $('miniMark').style.left = `${(p.x / (level.width * 16)) * 100}%`;
+  $('miniMark').style.left = `${(p.x / (level.width * T)) * 100}%`;
 }
 
 function tick() {
@@ -153,7 +155,7 @@ $('rand').onclick = () => { $('seed').value = 1 + Math.floor(Math.random() * 999
 for (const [id, out] of [['flow', 'flowOut'], ['diff', 'diffOut'], ['len', 'lenOut']]) $(id).oninput = () => { $(out).textContent = $(id).value; };
 
 // ---- tile sheet -----------------------------------------------------------------
-const sheet = $('sheet'), SCALE = 2;
+const sheet = $('sheet'), SCALE = 1;
 function drawSheet() {
   sheet.width = atlasIdx.w * SCALE; sheet.height = atlasIdx.h * SCALE;
   sheet.style.width = `${sheet.width}px`;
@@ -165,7 +167,7 @@ function drawSheet() {
 for (const t of Object.keys(THEMES)) $(`th-${t}`).onclick = () => { state.sheetTheme = t; for (const u of Object.keys(THEMES)) $(`th-${u}`).setAttribute('aria-pressed', u === t); drawSheet(); };
 sheet.addEventListener('pointermove', (e) => {
   const r = sheet.getBoundingClientRect();
-  const id = Math.floor((e.clientY - r.top) / (16 * SCALE)) * ts.columns + Math.floor((e.clientX - r.left) / (16 * SCALE)) + 1;
+  const id = Math.floor((e.clientY - r.top) / (T * SCALE)) * ts.columns + Math.floor((e.clientX - r.left) / (T * SCALE)) + 1;
   const t = ts.tiles[id];
   if (!t) return;
   const names = Object.keys(ts.names).filter((n) => ts.names[n] === id);

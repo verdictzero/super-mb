@@ -2,6 +2,7 @@
 // decide when to jump and for how long, so it needs no knowledge of the level layout.
 // Used to prove a level can be finished (and for the demo's auto-play).
 import { Sim, modeOf } from './sim.js';
+import { S } from '../core/units.js';
 
 const HOLDS = [2, 8, 16, 40];
 const DELAYS = [0, 4, 10, 18];
@@ -63,10 +64,10 @@ export class Bot {
     if (p.jumpHeld || modeOf(p.ang) !== 0) return { right: true }; // release before the next press
     if (sim.loops.some((L) => p.x > L.x && p.x < L.x + L.w && p.y > L.y)) return { right: true };
     const base = coast(sim, 90);
-    if (base.won || (!base.dead && base.x - p.x >= 8)) return { right: true };
+    if (base.won || (!base.dead && base.x - p.x >= 8 * S)) return { right: true };
     if (base.dead && best(sim, 3)) return { right: true }; // a later jump still works: wait for the edge
     const now = best(sim, 0);
-    if (now && (base.dead || now.x > base.x + 8)) { this.hold = now.hold - 1; return { right: true, jump: true }; }
+    if (now && (base.dead || now.x > base.x + 8 * S)) { this.hold = now.hold - 1; return { right: true, jump: true }; }
     return { right: true };
   }
 }

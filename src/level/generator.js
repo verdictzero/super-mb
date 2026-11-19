@@ -17,13 +17,14 @@
 import { LevelBuilder } from './builder.js';
 import { makeRng } from '../core/rng.js';
 import { PHYS } from '../engine/sim.js';
+import { TILE, S } from '../core/units.js';
 import { playtest } from '../engine/bot.js';
 
 const jumpPx = (PHYS.jump * PHYS.jump) / (2 * PHYS.grav);
 const airFrames = (2 * PHYS.jump) / PHYS.grav;
 export const RULES = {
-  maxStepUp: Math.min(3, Math.floor((jumpPx - 8) / 16)),        // tiles a jump can climb
-  maxPit: Math.floor((2.5 * airFrames) / 16) - 2,               // pit a slow walking jump clears, with margin
+  maxStepUp: Math.min(3, Math.floor((jumpPx - 8 * S) / TILE)),        // tiles a jump can climb
+  maxPit: Math.floor((2.5 * S * airFrames) / TILE + 1e-6) - 2,               // pit a slow walking jump clears, with margin
   maxKickerGap: 9,                                              // boosted launch off a kicker
   loopHeadroom: { loop6: 8, loop10: 12 },                       // rows needed above the ground
 };
