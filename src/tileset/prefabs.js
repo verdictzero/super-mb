@@ -28,19 +28,15 @@ export function prefabDefs() {
   hf('kicker', 3 * U, arcUp(4 * U), { cliff: true });
 
   for (const [name, R] of [['loop6', 3 * U], ['loop10', 5 * U], ['loop14', 7 * U], ['loop18', 9 * U]]) {
-    const T = U, Wb = 2 * R + 2 * T, Ht = 2 * R + T, rc = 20 * S, cx = Wb / 2, cy = -R;
+    const T = U, Wb = 2 * R + 2 * T, Ht = 2 * R + T, cx = Wb / 2, cy = -R;
     defs.push({
       name, type: 'mask', x0: -U, x1: Wb + U, y0: -Ht, y1: U, dy: 0, W: Wb,
+      // A ring standing on the floor, not a block with a hole: the floor runs straight in at
+      // ground level with open air around it, and you only cross the thin band of the ring.
       solid(x, y) {
         if (y >= 0) return true;
-        if (x < 0 || x >= Wb || y < -Ht) return false;
-        const px = x + 0.5, py = y + 0.5;
-        if ((px - cx) ** 2 + (py - cy) ** 2 < R * R) return false;
-        if (py < -Ht + rc) {
-          const ccx = px < rc ? rc : px > Wb - rc ? Wb - rc : null;
-          if (ccx !== null && (px - ccx) ** 2 + (py - (-Ht + rc)) ** 2 > rc * rc) return false;
-        }
-        return true;
+        const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+        return d >= R && d <= R + T;
       },
       // Lower-left quarter only exists on path B, lower-right only on path A, so the
       // floor can pass "through" the ring. See engine/physics.js for the switch rules.

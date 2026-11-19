@@ -20,7 +20,7 @@ lollipop trees, lit skylines, stepped pyramids). The three themes are Garden, Ne
 
 | Path | What |
 | --- | --- |
-| `assets/tileset-{meadow,cavern,dusk}.png` | The tile sheet in three themes (32 columns, 32px tiles, 349 tiles) |
+| `assets/tileset-{meadow,cavern,dusk}.png` | The tile sheet in three themes (32 columns, 32px tiles, 610 tiles) |
 | `assets/bg-{meadow,cavern,dusk}.png`, `assets/backgrounds.json` | Parallax background strips and their scroll table |
 | `assets/props-{meadow,cavern,dusk}.png`, `assets/props.json` | Big background set pieces and their rectangles |
 | `assets/shaders/*.frag` | The CRT television shader passes |
@@ -124,7 +124,8 @@ is cropped as overscan at the edges and no border ever shows.
 
 ## Loops
 
-A loop is a block with a circular hole. Its lower-left quarter is solid only on path B and its
+A loop is a ring standing on the floor, so the way in is at ground level with open air around it.
+Its lower-left quarter is solid only on path B and its
 lower-right quarter only on path A. You arrive on path A, run through the left wall, up the right
 side, and crossing the top switches you to path B, so the left side catches you and the right wall
 lets you out. The rule is a few lines in `Sim._paths()`.

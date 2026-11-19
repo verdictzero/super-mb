@@ -114,16 +114,14 @@ function draw() {
     if (q.x + pr.w < cx || q.x > cx + VW) continue;
     g.drawImage(propFor(level.theme, q.name, pr.frames.length > 1 ? Math.floor((sim.frame + state.idle) / 5 + q.x) % pr.frames.length : 0), q.x - cx, q.y - cy + (pr.sky ? Math.round(Math.sin((sim.frame + state.idle) / 45 + q.x) * T * 0.2) : 0));
   }
-  const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T), front = [];
+  const x0 = Math.floor(cx / T), y0 = Math.floor(cy / T);
   for (let ty = y0; ty <= y0 + ROWS; ty++) for (let tx = x0; tx <= x0 + COLS; tx++) {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;
     const i = ty * level.width + tx, X = tx * T - cx, Y = ty * T - cy;
     drawTile(sheet, level.decor[i], X, Y);
     const id = sim.terrain[i];
     if (!id) continue;
-    // loop quarters the player is not on are drawn over them, so they pass behind
-    if (ts.tiles[id].path && ts.tiles[id].path !== p.path && ts.tiles[id].path === 'A') front.push([id, X, Y]);
-    else drawTile(sheet, id, X, Y);
+    drawTile(sheet, id, X, Y); // the player is always drawn over the loop, so the way in and out stays visible
   }
   for (const o of sim.objs) {
     if (!o.alive) continue;
@@ -155,7 +153,6 @@ function draw() {
     g.drawImage(sheet, ((id - 1) % ts.columns) * T, Math.floor((id - 1) / ts.columns) * T, T, T, -T / 2, -T / 2, T, T);
     g.restore();
   }
-  for (const [id, X, Y] of front) drawTile(sheet, id, X, Y);
   for (const q of parts) {
     g.globalAlpha = Math.min(1, (q.life / q.max) * 1.6);
     if (q.gem) drawTile(sheet, ts.names.gem, Math.round(q.x) - cx - T / 2, Math.round(q.y) - cy - T / 2);
