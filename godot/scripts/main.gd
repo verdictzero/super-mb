@@ -232,6 +232,7 @@ func _physics_process(_delta: float) -> void:
 func _process(_delta: float) -> void:
 	if sim == null:
 		return
+	_debug_shot()
 	var p: Dictionary = sim.p
 	hud.text = "%s    gems %d    speed %.1f    path %s    %s\n[N/P] level  [B] bot  [C] CRT  [M] mask  [G] degauss  [R] restart" % [
 		level.get("name", ""), p.gems, absf(p.gsp if p.grounded else Vector2(p.xsp, p.ysp).length()) / 2.0, p.path,
@@ -314,3 +315,26 @@ func _effects() -> void:
 	trail.append({"x": p.x, "y": p.y, "fast": not p.dead and absf(p.gsp if p.grounded else p.xsp) > 0.5 * TILE})
 	if trail.size() > 8:
 		trail.pop_front()
+
+
+# ---- debugging: `godot --path godot -- --shot=out.png [--frames=240] [--level=3] [--bot] [--nocrt]`
+# plays for a while, saves what is on screen and quits. Used to check rendering from the command line.
+var _shot_args := {}
+var _shot_ready := false
+
+func _debug_shot() -> void:
+	if not _shot_ready:
+		_shot_ready = true
+		for a in OS.get_cmdline_user_args():
+			var kv: PackedStringArray = a.trim_prefix("--").split("=")
+			_shot_args[kv[0]] = kv[1] if kv.size() > 1 else "1"
+		if _shot_args.has("level"):
+			load_level(int(_shot_args["level"]))
+		if _shot_args.has("bot"):
+			use_bot = true
+		if _shot_args.has("nocrt"):
+			_set_crt(false)
+	if _shot_args.has("shot") and clock >= int(_shot_args.get("frames", "240")):
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(_shot_args["shot"])
+		get_tree().quit()

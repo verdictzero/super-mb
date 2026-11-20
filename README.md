@@ -107,8 +107,18 @@ What is not ported: the art generator and the level generator stay in JavaScript
 asset pipeline. `npm run build` writes everything the Godot project reads, so new art or levels
 reach Godot by rebuilding.
 
-Status: the GDScript has been syntax-checked with gdtoolkit, but the project has not been run in
-Godot, and the shaders have not been compiled. Expect to fix small things on first open.
+Checked with Godot 4.3:
+
+- **Physics parity**: `godot/tests/parity.gd` and `scripts/parity.js` play every baked level with the
+  bot and print the finishing frame, gems and final position. The two outputs are identical on all
+  12 levels.
+- **Rendering**: run under a virtual display with the OpenGL renderer, the level, backdrop, set
+  pieces, player and all four CRT passes draw with no script or shader errors.
+  `godot --path godot -- --shot=out.png --frames=200 --bot [--nocrt] [--level=3]` saves a frame.
+
+Known limit: the bot's look-ahead is much slower in GDScript than in JavaScript (about 25 ms per
+frame on average on the test machine), so auto-play (B) can run below full speed. Playing by hand
+is unaffected.
 
 ## Factory zone
 
