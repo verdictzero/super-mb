@@ -5,9 +5,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 GODOT="${GODOT:-godot}"
 VERSION="$(grep -oP 'config/version="\K[^"]+' godot/project.godot)"
-rm -rf build/godot && mkdir -p build/godot/{linux,windows,web,macos} release
+rm -rf build/godot && mkdir -p build/godot/{linux,windows,web,macos,android} release
 "$GODOT" --headless --path godot --import >/dev/null 2>&1 || true
-for preset in Linux Windows Web macOS; do
+# Android needs the Android SDK and a JDK set in Godot's editor settings, and a signing key:
+#   GODOT_ANDROID_KEYSTORE_RELEASE_PATH / _USER / _PASSWORD. It is skipped when no key is given.
+PRESETS="Linux Windows Web macOS"
+[ -n "${GODOT_ANDROID_KEYSTORE_RELEASE_PATH:-}" ] && PRESETS="$PRESETS Android"
+for preset in $PRESETS; do
   echo "== exporting $preset"
   "$GODOT" --headless --path godot --export-release "$preset" 2>&1 | grep -E "ERROR|WARNING: .*export|savepack" || true
 done
@@ -15,4 +19,5 @@ done
 (cd build/godot/windows && zip -q -9 "../../../release/super-mb-$VERSION-windows.zip" super-mb.exe)
 (cd build/godot/web && zip -q -9 -r "../../../release/super-mb-$VERSION-web.zip" .)
 [ -f build/godot/macos/super-mb-macos.zip ] && cp build/godot/macos/super-mb-macos.zip "release/super-mb-$VERSION-macos.zip"
+[ -f build/godot/android/super-mb.apk ] && cp build/godot/android/super-mb.apk "release/super-mb-$VERSION-android.apk"
 ls -la release

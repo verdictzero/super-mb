@@ -201,10 +201,10 @@ func _title_card(t: int, lvl: Dictionary) -> void:
 	_label(zone, view.x - 30 + 700.0 * (1.0 - _ease((t - 6) / float(main.INTRO_IN)) * (1.0 - o)), 196, 60, Color.WHITE, 2)
 	_label("ZONE", view.x - 30 + 700.0 * (1.0 - _ease((t - 14) / float(main.INTRO_IN)) * (1.0 - o)), 258, 46, Color.WHITE, 2)
 	var ay := 392.0 + 200.0 * (1.0 - _ease((t - 20) / float(main.INTRO_IN)) * (1.0 - o))
-	draw_circle(Vector2(404, ay + 4), 50, Color(0.08, 0.04, 0.18))
-	draw_circle(Vector2(400, ay), 50, red)
-	_label("ACT", 400, ay - 14, 20, yellow, 1)
-	_label(str(int(lvl.get("act", 1))), 400, ay + 34, 50, Color.WHITE, 1)
+	draw_circle(Vector2(view.x / 2.0 + 4, ay + 4), 50, Color(0.08, 0.04, 0.18))
+	draw_circle(Vector2(view.x / 2.0, ay), 50, red)
+	_label("ACT", view.x / 2.0, ay - 14, 20, yellow, 1)
+	_label(str(int(lvl.get("act", 1))), view.x / 2.0, ay + 34, 50, Color.WHITE, 1)
 
 
 ## Score tally: heading and rows slide in, then the bonuses drain into the total.
@@ -220,8 +220,8 @@ func _tally(t: int, lvl: Dictionary) -> void:
 	for i in rows.size():
 		var yy := 240.0 + i * 50 + (16 if i == 2 else 0)
 		var dx := (1.0 - _ease((t - 30 - i * 10) / 22.0)) * view.x
-		_label(rows[i][0], 210 - dx, yy, 30, yellow)
-		_label(str(int(rows[i][1])), 600 + dx, yy, 30, Color.WHITE, 2)
+		_label(rows[i][0], view.x / 2.0 - 190 - dx, yy, 30, yellow)
+		_label(str(int(rows[i][1])), view.x / 2.0 + 200 + dx, yy, 30, Color.WHITE, 2)
 
 
 ## one horizontal strip of a parallax layer, tiled across the view

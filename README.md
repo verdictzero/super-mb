@@ -83,6 +83,9 @@ It needs the export templates matching your Godot version. The version comes fro
 - **Linux**: one executable with the game data embedded.
 - **Windows**: one `.exe` with the game data embedded. Not code-signed.
 - **macOS**: universal app, ad-hoc signed only, so Gatekeeper will ask before first launch.
+- **Android**: a signed APK for arm64 and 32-bit ARM, Android 5.0 and up, landscape. It is exported
+  only when a signing key is given (`GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `_USER`, `_PASSWORD`) and
+  Godot's editor settings point at an Android SDK and a JDK.
 - **Web**: static files; serve the folder over HTTP (opening `index.html` from disk does not work).
 
 ## Zones, layouts and act flow
@@ -128,6 +131,11 @@ physics and look. Open the folder in the Godot editor and press Play.
 | `godot/scripts/main.gd` | Loading, input, the viewport chain for the CRT shader, HUD |
 | `godot/shaders/crt_*.gdshader` | The four CRT passes in Godot's shading language |
 | `godot/assets/` | Baked by `npm run build`: tile sheets, backdrops, set pieces, the head, all tables, and 11 levels as JSON |
+
+On a touch screen the game shows on-screen controls (`godot/scripts/touch_ui.gd`): left and right
+under the left thumb, jump under the right, and small buttons for retry, CRT, bot and next level.
+The view is always 450 art pixels tall and as wide as the screen's shape needs, so wide phones see
+more of the level instead of a stretched picture.
 
 Keys: arrows or A/D to run, Space/Up/Z to jump, R restart, N/P next/previous level, B bot auto-play,
 C CRT on/off, M mask type, G degauss.

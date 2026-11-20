@@ -6,7 +6,7 @@ extends Node2D
 ## Keys: arrows / A D to run, Space / Up / Z to jump, R restart, N / P next / previous level,
 ## B bot auto-play, C CRT on/off, G degauss, M phosphor mask type.
 
-const VIEW := Vector2(800, 450)   # logical view in art pixels
+var view := Vector2(800, 450)      # logical view in art pixels: 450 tall, width follows the screen's shape
 const K := 2                      # the game viewport renders at K times that, so the photo stays sharp
 const TILE := 32.0
 
@@ -55,6 +55,7 @@ var mask_type := 0
 var mat_signal: ShaderMaterial
 var mat_phosphor: ShaderMaterial
 var mat_tube: ShaderMaterial
+var touch: Node2D
 
 
 static func read_json(path: String):
@@ -69,6 +70,9 @@ func _ready() -> void:
 	backgrounds = read_json("res://assets/backgrounds.json")
 	props = read_json("res://assets/props.json")
 	level_index = read_json("res://assets/levels/index.json")
+	# fit the view to the screen: same height everywhere, wider on wide phones, never stretched
+	var win := get_viewport().get_visible_rect().size
+	view = Vector2(roundf(450.0 * clampf(win.x / win.y, 4.0 / 3.0, 2.4) / 2.0) * 2.0, 450.0)
 	_build_nodes()
 	load_level(0)
 
@@ -76,7 +80,7 @@ func _ready() -> void:
 func _build_nodes() -> void:
 	# the game itself, rendered off-screen
 	game_vp = SubViewport.new()
-	game_vp.size = Vector2i(VIEW * K)
+	game_vp.size = Vector2i(view * K)
 	game_vp.disable_3d = true
 	game_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child(game_vp)
@@ -87,7 +91,7 @@ func _build_nodes() -> void:
 	world.set_script(load("res://scripts/world.gd"))
 	world.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	world.main = self
-	world.view = VIEW
+	world.view = view
 	root.add_child(world)
 	player_view = Node2D.new()
 	player_view.set_script(load("res://scripts/player_view.gd"))
@@ -97,11 +101,11 @@ func _build_nodes() -> void:
 	root.add_child(player_view)
 
 	# CRT passes: signal -> phosphor (feeds back on itself) -> blur H -> blur V -> tube on screen
-	var art := Vector2i(VIEW)
+	var art := Vector2i(view)
 	var sig := _pass(art, "res://shaders/crt_signal.gdshader", false)
 	mat_signal = sig[1]
 	mat_signal.set_shader_parameter("u_src", game_vp.get_texture())
-	mat_signal.set_shader_parameter("u_res", VIEW)
+	mat_signal.set_shader_parameter("u_res", view)
 	var pho := _pass(art, "res://shaders/crt_phosphor.gdshader", true)
 	mat_phosphor = pho[1]
 	mat_phosphor.set_shader_parameter("u_cur", sig[0].get_texture())
@@ -135,6 +139,10 @@ func _build_nodes() -> void:
 	hud.add_theme_color_override("font_outline_color", Color.BLACK)
 	hud.add_theme_constant_override("outline_size", 6)
 	layer.add_child(hud)
+	touch = Node2D.new()
+	touch.set_script(load("res://scripts/touch_ui.gd"))
+	touch.main = self
+	layer.add_child(touch)
 	_set_crt(true)
 
 
@@ -187,7 +195,7 @@ func load_level(n: int) -> void:
 	player_view.trail.clear()
 	wait = 0
 	_start_act()
-	world.cam = Vector2(sim.p.x - VIEW.x * 0.42, sim.p.y - VIEW.y * 0.58)
+	world.cam = Vector2(sim.p.x - view.x * 0.42, sim.p.y - view.y * 0.58)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -211,6 +219,22 @@ func _unhandled_input(event: InputEvent) -> void:
 			degauss = 1.6
 		KEY_M:
 			mask_type = (mask_type + 1) % 3
+
+
+## small on-screen buttons
+func touch_tap(button: String) -> void:
+	match button:
+		"next":
+			load_level(level_no + 1)
+		"bot":
+			use_bot = not use_bot
+			bot = Bot.new()
+		"crt":
+			_set_crt(not crt_on)
+		"restart":
+			sim.reset(false)
+			bot = Bot.new()
+			_start_act()
 
 
 func _physics_process(_delta: float) -> void:
@@ -252,9 +276,9 @@ func _physics_process(_delta: float) -> void:
 		sim.step(keys[0], keys[1], keys[2])
 	else:
 		play_time += 1
-		var left := Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A)
-		var right := Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D)
-		var jump := Input.is_physical_key_pressed(KEY_SPACE) or Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_Z) or Input.is_physical_key_pressed(KEY_W)
+		var left: bool = Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A) or touch.is_held("left")
+		var right: bool = Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D) or touch.is_held("right")
+		var jump: bool = touch.is_held("jump") or Input.is_physical_key_pressed(KEY_SPACE) or Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_Z) or Input.is_physical_key_pressed(KEY_W)
 		sim.step(left, right, jump)
 	_effects()
 
@@ -264,9 +288,10 @@ func _process(_delta: float) -> void:
 		return
 	_debug_shot()
 	var p: Dictionary = sim.p
-	hud.text = "%s Zone, Act %d    score %d    time %d:%02d    gems %d    speed %.1f    path %s    %s\n[N/P] level  [B] bot  [C] CRT  [M] mask  [G] degauss  [R] restart" % [
+	hud.text = "%s Zone, Act %d    score %d    time %d:%02d    gems %d    speed %.1f    path %s    %s%s" % [
 		level.get("name", ""), int(level.get("act", 1)), score, play_time / 3600, (play_time / 60) % 60, p.gems, absf(p.gsp if p.grounded else Vector2(p.xsp, p.ysp).length()) / 2.0, p.path,
-		"bot playing" if use_bot else ""]
+		"bot playing" if use_bot else "",
+		"" if touch.shown else "\n[N/P] level  [B] bot  [C] CRT  [M] mask  [G] degauss  [R] restart"]
 	if crt_on:
 		crt_frame += 1.0
 		degauss *= 0.965

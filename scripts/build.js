@@ -80,6 +80,7 @@ for (const { id, level } of levels) {
 // ---- Godot project assets (godot/assets): the same sheets and levels, plus the tables the port reads
 {
   const G = 'godot/assets';
+  fs.rmSync(path.join(root, G, 'levels'), { recursive: true, force: true }); // no stale levels in the export
   for (const f of fs.readdirSync(path.join(root, 'assets'))) if (/\.(png|json)$/.test(f) && f !== 'tileset.tsj') out(`${G}/${f}`, fs.readFileSync(path.join(root, 'assets', f)));
   out(`${G}/themes.json`, json(Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, { label: t.label, sky: skyBands(k), colors: t.colors }]))));
   const index = [];
