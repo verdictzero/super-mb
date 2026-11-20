@@ -138,6 +138,23 @@ function megaTanks(h, rng) { // colossal spheres on legs joined by pipe bridges
   return g;
 }
 
+function sunDisc() { // big sun whose lower half is cut into bands
+  const sun = new Img(W, 80, S).disc(170, 44, 30, P.sun).disc(170, 44, 24, P.sunL);
+  for (let k = 0; k < 5; k++) sun.map((x, y, c) => (c && Math.abs(y - (52 + k * 6)) < 1 + k * 0.4 ? 0 : undefined));
+  return sun;
+}
+function pines(h, rng, n) { // row of snow-tipped firs over a snow bank
+  const g = new Img(W, h, S).rect(0, h - 8, W, 8, P.bgNearD);
+  for (let i = 0; i < n; i++) { const x = (i * W) / n + rng.int(-5, 5), th = rng.int(22, 42); wrapX((o) => { g.rect(x + o - 1.5, h - 10, 3, 4, P.bgNearD); for (let k = 0; k < 3; k++) { const y = h - 8 - (th * k) / 3.4, w = 10 - k * 2.6, hh = th / 2.4; g.poly([[x + o - w, y], [x + o, y - hh], [x + o + w, y]], P.bgNear).poly([[x + o - w * 0.45, y - hh * 0.55], [x + o, y - hh], [x + o + w * 0.45, y - hh * 0.55]], P.bgFarL); } }); }
+  return g;
+}
+function colonnade(h, rng) { // broken columns and a fallen lintel on sand
+  const g = new Img(W, h, S).rect(0, h - 10, W, 10, P.bgNearD);
+  for (let i = 0; i < 9; i++) { const x = (i * W) / 9 + rng.int(-4, 4), th = rng.int(14, 36); wrapX((o) => g.rect(x + o, h - 10 - th, 8, th, P.bgNear).rect(x + o, h - 10 - th, 2, th, P.bgMid).rect(x + o - 2, h - 10 - th, 12, 3, P.bgNear).rect(x + o - 2, h - 13, 12, 3, P.bgNear)); }
+  for (const x of [40, 150]) wrapX((o) => g.rect(x + o, h - 50, 44, 5, P.bgNear).rect(x + o, h - 50, 44, 1.5, P.bgMid));
+  return g;
+}
+
 const PAINT = {
   factory(rng) { // works: smog bands, chimneys and tanks, giant spheres, chemical channel, trusses, pipes
     return [
@@ -176,9 +193,41 @@ const PAINT = {
       { name: 'prisms', img: prisms(44, rng, 12, P.bgFar, P.bgNearD, 14, 36), y: 26, factor: 0.58, fill: P.ink },
     ];
   },
+  frost(rng) { // ice field: moon, snow clouds, snow-capped prisms, frozen lake, snow mounds, pines
+    return [
+      { name: 'moon', img: planet(false), y: -100, factor: 0.01, once: true },
+      { name: 'clouds-far', img: lozenges(24, rng, 7, 12, 26), y: -60, factor: 0.03, drift: 0.05 },
+      { name: 'clouds-near', img: lozenges(30, rng, 5, 24, 46), y: -98, factor: 0.06, drift: 0.11 },
+      { name: 'peaks', img: prisms(84, rng, 11, P.bgFarL, P.bgFar, 34, 78), y: -84, factor: 0.1 },
+      { name: 'frozen-lake', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
+      { name: 'snow-mounds', img: domes(52, rng, 7, P.bgMidL, P.bgMid, P.white, 16, 34), y: 6, factor: 0.4 },
+      { name: 'pines', img: pines(52, rng, 15), y: 20, factor: 0.58, fill: P.ink },
+    ];
+  },
+  sky(rng) { // above the clouds: ringed planet, cloud banks at three depths, floating islands, a cloud sea
+    return [
+      { name: 'planet', img: planet(true), y: -100, factor: 0.01, once: true },
+      { name: 'clouds-far', img: lozenges(26, rng, 9, 14, 30), y: -64, factor: 0.03, drift: 0.08 },
+      { name: 'floating-islands', img: floatingIslands(84, rng), y: -86, factor: 0.16 },
+      { name: 'clouds-mid', img: lozenges(34, rng, 6, 30, 60), y: -40, factor: 0.1, drift: 0.16 },
+      { name: 'cloud-sea', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
+      { name: 'cloud-banks', img: domes(52, rng, 9, P.bgMid, P.bgMidL, P.white, 18, 36), y: 6, factor: 0.4 },
+      { name: 'near-clouds', img: lozenges(46, rng, 8, 30, 70), y: 26, factor: 0.58, fill: P.ink },
+    ];
+  },
+  ruins(rng) { // desert ruins: banded sun, heat streaks, pyramids, stepped temples, dunes, broken colonnade
+    return [
+      { name: 'sun', img: sunDisc(), y: -108, factor: 0, once: true },
+      { name: 'streaks', img: streaks(36, rng, 10), y: -84, factor: 0.03, drift: 0.04 },
+      { name: 'pyramids', img: prisms(80, rng, 6, P.bgFarL, P.bgFar, 40, 76), y: -80, factor: 0.08 },
+      { name: 'temples', img: ziggurats(66, rng, 3, P.bgMidL, P.bgMid), y: -64, factor: 0.18 },
+      { name: 'shimmer', img: water(40, rng), y: 0, factor: 0.14, factor2: 0.34, line: true },
+      { name: 'dunes', img: silhouette(52, (x) => 22 + ridge([[12, 2, 0.3], [6, 5, 0.7]])(x), P.bgMid, 2, P.bgMidL), y: 6, factor: 0.4 },
+      { name: 'colonnade', img: colonnade(48, rng), y: 24, factor: 0.58, fill: P.ink },
+    ];
+  },
   dusk(rng) { // sunset: banded sun, cloud bars, stepped pyramids, striped domes
-    const sun = new Img(W, 80, S).disc(170, 44, 30, P.sun).disc(170, 44, 24, P.sunL);
-    for (let k = 0; k < 5; k++) sun.map((x, y, c) => (c && Math.abs(y - (52 + k * 6)) < 1 + k * 0.4 ? 0 : undefined)); // banded lower half
+    const sun = sunDisc();
     return [
       { name: 'sun', img: sun, y: -104, factor: 0, once: true },
       { name: 'streaks-far', img: streaks(40, rng, 14), y: -74, factor: 0.03, drift: 0.05 },

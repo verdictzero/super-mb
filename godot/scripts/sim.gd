@@ -44,6 +44,8 @@ var events: Array = []
 var kill_y := PackedFloat32Array()
 var check = null                    # last checkpoint position, or null
 var _belt := 0.0
+var frc := FRC                      # a level can change how the ground grips (ice): level.physics = {frc, dec} multipliers
+var dec := DEC
 
 
 static func mode_of(ang: float) -> int:
@@ -67,6 +69,10 @@ func setup(tileset: Dictionary, lvl: Dictionary) -> void:
 	names = tileset["names"]
 	level = lvl
 	w = int(lvl["width"])
+	var phys = lvl.get("physics")
+	if phys != null:
+		frc = FRC * float(phys.get("frc", 1.0))
+		dec = DEC * float(phys.get("dec", 1.0))
 	h = int(lvl["height"])
 	# Falling is fatal once you are below everything that could catch you: per column, a few tiles
 	# under the lowest solid tile in that column or the six either side.
@@ -141,6 +147,8 @@ func fork() -> Sim:
 	s.kill_y = kill_y
 	s.frame = frame
 	s.check = check
+	s.frc = frc
+	s.dec = dec
 	s.p = p.duplicate()
 	s.objs = []
 	for o in objs:
@@ -251,13 +259,13 @@ func _ground(dir: int, jump_pressed: bool) -> void:
 		p.gsp -= (SLOPE_FLOOR if mode == 0 else SLOPE) * s
 	if dir != 0:
 		if p.gsp * dir < 0:
-			p.gsp += DEC * dir
+			p.gsp += dec * dir
 			if p.gsp * dir > 0:
 				p.gsp = 0.5 * S * dir
 		elif mode == 0 and absf(p.gsp) < TOP: # no pushing on walls: loops need real speed
 			p.gsp = dir * minf(TOP, absf(p.gsp) + ACC)
 	elif p.lock == 0:
-		p.gsp -= signf(p.gsp) * minf(absf(p.gsp), FRC)
+		p.gsp -= signf(p.gsp) * minf(absf(p.gsp), frc)
 	p.gsp = clampf(p.gsp, -MAX_SPEED, MAX_SPEED)
 
 	if jump_pressed: # jump along the surface normal

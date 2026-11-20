@@ -76,6 +76,12 @@ const PAINT = {
     return ball(g, 36, 34, 31, P.bgMid, P.bgMidL, 7).outline(P.bgNearD);
   },
   palm() { return drawPalm(new Img(112, 132, S), 44, 132, 92).outline(P.bgNearD); },
+  pine() { // tall fir with snow on every tier
+    const g = new Img(72, 124, S);
+    g.rect(32, 104, 8, 20, P.bgNearD).rect(32, 104, 3, 20, P.bgNear);
+    for (let k = 0; k < 5; k++) { const y = 108 - k * 20, w = 34 - k * 6; g.poly([[36 - w, y], [36, y - 30], [36 + w, y]], k % 2 ? P.bgMidD : P.bgNear).poly([[36 - w * 0.5, y - 15], [36, y - 30], [36 + w * 0.5, y - 15], [36 + w * 0.2, y - 12], [36, y - 16], [36 - w * 0.25, y - 11]], P.bgFarL); }
+    return g.disc(36, 6, 3, P.sunL).outline(P.bgNearD);
+  },
   ferris() { // big wheel on an A-frame
     const g = new Img(136, 144, S), cx = 67.5, cy = 62, R = 54;
     line(g, cx, cy, 30, 144, 5, P.bgNearD); line(g, cx, cy, 105, 144, 5, P.bgNearD); line(g, 42, 118, 93, 118, 3, P.bgNearD);
@@ -218,6 +224,9 @@ export const PROP_SETS = {
   meadow: ['bigtree', 'bigtree', 'arch', 'totem', 'balloon', 'waterfall', 'orb', 'hoop', 'palm', 'ferris'],
   cavern: ['pylon', 'pylon', 'crystals', 'crystals', 'gear', 'column', 'ferris', 'orb', 'hoop', 'blimp'],
   dusk: ['palm', 'palm', 'totem', 'arch', 'blimp', 'balloon', 'ferris', 'column', 'gear', 'orb'],
+  frost: ['pine', 'pine', 'pine', 'crystals', 'crystals', 'orb', 'hoop', 'column', 'balloon'],
+  sky: ['balloon', 'balloon', 'blimp', 'hoop', 'hoop', 'arch', 'orb', 'bigtree', 'ferris'],
+  ruins: ['column', 'column', 'totem', 'totem', 'arch', 'palm', 'palm', 'orb', 'gear'],
   factory: ['cogs', 'pistons', 'boiler', 'stack', 'flywheel', 'tank', 'pipeworks', 'cogs', 'pistons', 'pylon', 'blimp'],
 };
 

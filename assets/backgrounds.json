@@ -314,6 +314,297 @@
    }
   ]
  },
+ "frost": {
+  "image": "bg-frost.png",
+  "sky": [
+   "#0a1650",
+   "#3a6cd0",
+   "#b8f0ff"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "moon",
+    "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -200,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-far",
+    "srcY": 140,
+    "w": 512,
+    "h": 48,
+    "y": -120,
+    "factor": 0.03,
+    "drift": 0.05,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-near",
+    "srcY": 188,
+    "w": 512,
+    "h": 60,
+    "y": -196,
+    "factor": 0.06,
+    "drift": 0.11,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "peaks",
+    "srcY": 248,
+    "w": 512,
+    "h": 168,
+    "y": -168,
+    "factor": 0.1,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "frozen-lake",
+    "srcY": 416,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "snow-mounds",
+    "srcY": 496,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "pines",
+    "srcY": 600,
+    "w": 512,
+    "h": 104,
+    "y": 40,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
+ "sky": {
+  "image": "bg-sky.png",
+  "sky": [
+   "#2462ec",
+   "#6cc4ff",
+   "#fff0c4"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "planet",
+    "srcY": 0,
+    "w": 512,
+    "h": 140,
+    "y": -200,
+    "factor": 0.01,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-far",
+    "srcY": 140,
+    "w": 512,
+    "h": 52,
+    "y": -128,
+    "factor": 0.03,
+    "drift": 0.08,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "floating-islands",
+    "srcY": 192,
+    "w": 512,
+    "h": 168,
+    "y": -172,
+    "factor": 0.16,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "clouds-mid",
+    "srcY": 360,
+    "w": 512,
+    "h": 68,
+    "y": -80,
+    "factor": 0.1,
+    "drift": 0.16,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "cloud-sea",
+    "srcY": 428,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "cloud-banks",
+    "srcY": 508,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "near-clouds",
+    "srcY": 612,
+    "w": 512,
+    "h": 92,
+    "y": 52,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
+ "ruins": {
+  "image": "bg-ruins.png",
+  "sky": [
+   "#e8782c",
+   "#ffc864",
+   "#fff2c8"
+  ],
+  "horizonAboveGround": 90,
+  "layers": [
+   {
+    "name": "sun",
+    "srcY": 0,
+    "w": 512,
+    "h": 160,
+    "y": -216,
+    "factor": 0,
+    "drift": 0,
+    "lineScroll": false,
+    "once": true,
+    "pinTop": false
+   },
+   {
+    "name": "streaks",
+    "srcY": 160,
+    "w": 512,
+    "h": 72,
+    "y": -168,
+    "factor": 0.03,
+    "drift": 0.04,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "pyramids",
+    "srcY": 232,
+    "w": 512,
+    "h": 160,
+    "y": -160,
+    "factor": 0.08,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "temples",
+    "srcY": 392,
+    "w": 512,
+    "h": 132,
+    "y": -128,
+    "factor": 0.18,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "shimmer",
+    "srcY": 524,
+    "w": 512,
+    "h": 80,
+    "y": 0,
+    "factor": 0.14,
+    "factor2": 0.34,
+    "drift": 0,
+    "lineScroll": true,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "dunes",
+    "srcY": 604,
+    "w": 512,
+    "h": 104,
+    "y": 12,
+    "factor": 0.4,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false
+   },
+   {
+    "name": "colonnade",
+    "srcY": 708,
+    "w": 512,
+    "h": 96,
+    "y": 48,
+    "factor": 0.58,
+    "drift": 0,
+    "lineScroll": false,
+    "once": false,
+    "pinTop": false,
+    "fillBelow": "#140a2e"
+   }
+  ]
+ },
  "dusk": {
   "image": "bg-dusk.png",
   "sky": [

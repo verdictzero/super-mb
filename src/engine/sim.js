@@ -24,6 +24,8 @@ export class Sim {
   constructor(ts, level) {
     this.ts = ts; this.level = level;
     this.w = level.width; this.h = level.height;
+    // a level can change how the ground grips: level.physics = { frc, dec } multiplies friction and braking (ice)
+    this.frc = PHYS.frc * ((level.physics && level.physics.frc) ?? 1); this.dec = PHYS.dec * ((level.physics && level.physics.dec) ?? 1);
     // Falling is fatal once you are below everything that could catch you: per column, a few
     // tiles under the lowest solid tile in that column or the six either side (so a pit is as deep
     // as the ground around it).
@@ -114,9 +116,9 @@ export class Sim {
     const s = Math.sin(p.ang * RAD);
     if (mode !== 0 || Math.abs(p.gsp) > 0.05 * S || Math.abs(s) > 0.3 || dir) p.gsp -= (mode === 0 ? P.slopeFloor : P.slope) * s;
     if (dir) {
-      if (p.gsp * dir < 0) { p.gsp += P.dec * dir; if (p.gsp * dir > 0) p.gsp = 0.5 * S * dir; }
+      if (p.gsp * dir < 0) { p.gsp += this.dec * dir; if (p.gsp * dir > 0) p.gsp = 0.5 * S * dir; }
       else if (mode === 0 && Math.abs(p.gsp) < P.top) p.gsp = dir * Math.min(P.top, Math.abs(p.gsp) + P.acc); // no pushing on walls: loops need real speed
-    } else if (p.lock === 0) p.gsp -= Math.sign(p.gsp) * Math.min(Math.abs(p.gsp), P.frc);
+    } else if (p.lock === 0) p.gsp -= Math.sign(p.gsp) * Math.min(Math.abs(p.gsp), this.frc);
     p.gsp = Math.max(-P.max, Math.min(P.max, p.gsp));
 
     if (jumpPressed) { // jump along the surface normal

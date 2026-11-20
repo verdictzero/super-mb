@@ -30,6 +30,15 @@ var use_bot := false
 var clock := 0
 var anim_tick := 0
 var wait := 0
+# act flow: title card -> play -> score tally
+const INTRO_IN := 26
+const INTRO_HOLD := 112
+const INTRO_OUT := 142
+var phase := "intro"
+var phase_t := 0
+var score := 0
+var play_time := 0
+var tally := {}
 var parts: Array = []
 var morph := {"v": 0.0, "vel": 0.0, "axis": 0.0, "lean": 0.0, "lag": 0.0, "was_jumping": false, "was_grounded": true}
 
@@ -177,6 +186,7 @@ func load_level(n: int) -> void:
 	parts.clear()
 	player_view.trail.clear()
 	wait = 0
+	_start_act()
 	world.cam = Vector2(sim.p.x - VIEW.x * 0.42, sim.p.y - VIEW.y * 0.58)
 
 
@@ -187,6 +197,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_R:
 			sim.reset(false)
 			bot = Bot.new()
+			_start_act()
 		KEY_N:
 			load_level(level_no + 1)
 		KEY_P:
@@ -208,20 +219,39 @@ func _physics_process(_delta: float) -> void:
 	clock += 1
 	anim_tick = clock / 5
 	var p: Dictionary = sim.p
-	if p.dead or p.won:
-		wait += 1
-		if wait > (150 if p.won else 60):
-			if p.won:
+	if phase == "intro": # the title card holds the player still
+		phase_t += 1
+		if phase_t >= INTRO_OUT:
+			phase = "play"
+		return
+	if p.won: # tally: wait, drain the bonuses into the total, hold, then go to the next level
+		if phase != "tally":
+			phase = "tally"
+			phase_t = 0
+			tally = {"time": _time_bonus(play_time), "gems": int(p.gems) * 100, "total": score, "done": 0}
+		phase_t += 1
+		if phase_t > 110:
+			var moved := _take("time")
+			if moved == 0:
+				moved = _take("gems")
+			if moved == 0 and tally.done == 0:
+				tally.done = phase_t
+			if tally.done > 0 and phase_t > tally.done + 170:
 				load_level(level_no + 1)
-			else:
-				sim.reset(true)
-				bot = Bot.new()
-				wait = 0
-				player_view.trail.clear()
+				return
+	elif p.dead:
+		wait += 1
+		if wait > 60:
+			sim.reset(true)
+			bot = Bot.new()
+			wait = 0
+			player_view.trail.clear()
 	elif use_bot:
+		play_time += 1
 		var keys := bot.input(sim)
 		sim.step(keys[0], keys[1], keys[2])
 	else:
+		play_time += 1
 		var left := Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A)
 		var right := Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D)
 		var jump := Input.is_physical_key_pressed(KEY_SPACE) or Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_Z) or Input.is_physical_key_pressed(KEY_W)
@@ -234,9 +264,9 @@ func _process(_delta: float) -> void:
 		return
 	_debug_shot()
 	var p: Dictionary = sim.p
-	hud.text = "%s    gems %d    speed %.1f    path %s    %s\n[N/P] level  [B] bot  [C] CRT  [M] mask  [G] degauss  [R] restart" % [
-		level.get("name", ""), p.gems, absf(p.gsp if p.grounded else Vector2(p.xsp, p.ysp).length()) / 2.0, p.path,
-		"bot playing" if use_bot else ("Goal!" if p.won else ("try again" if p.dead else ""))]
+	hud.text = "%s Zone, Act %d    score %d    time %d:%02d    gems %d    speed %.1f    path %s    %s\n[N/P] level  [B] bot  [C] CRT  [M] mask  [G] degauss  [R] restart" % [
+		level.get("name", ""), int(level.get("act", 1)), score, play_time / 3600, (play_time / 60) % 60, p.gems, absf(p.gsp if p.grounded else Vector2(p.xsp, p.ysp).length()) / 2.0, p.path,
+		"bot playing" if use_bot else ""]
 	if crt_on:
 		crt_frame += 1.0
 		degauss *= 0.965
@@ -245,6 +275,31 @@ func _process(_delta: float) -> void:
 		mat_tube.set_shader_parameter("u_out", get_viewport().get_visible_rect().size)
 		mat_tube.set_shader_parameter("u_degauss", minf(1.0, degauss))
 		mat_tube.set_shader_parameter("u_mask_type", float(mask_type))
+
+
+func _start_act() -> void:
+	phase = "intro"
+	phase_t = 0
+	score = 0
+	play_time = 0
+	tally = {}
+
+
+## bonus for finishing quickly, by seconds taken
+func _time_bonus(frames: int) -> int:
+	var s := frames / 60.0
+	for row in [[30, 50000], [45, 10000], [60, 5000], [90, 4000], [120, 3000], [180, 2000], [240, 1000], [300, 500]]:
+		if s < row[0]:
+			return row[1]
+	return 0
+
+
+func _take(key: String) -> int:
+	var n: int = mini(int(tally[key]), 100)
+	tally[key] -= n
+	tally.total += n
+	score = tally.total
+	return n
 
 
 # ---- visual effects driven by sim events: particles and squash-and-stretch -------------------
@@ -261,6 +316,7 @@ func _effects() -> void:
 	var col: Dictionary = theme["colors"]
 	# squash and stretch: one springy value; positive stretches along an axis, negative squashes
 	for e in sim.events:
+		score += int({"gem": 10, "bop": 100, "bonus": 50, "brick": 10}.get(e.type, 0))
 		match e.type:
 			"land":
 				morph.vel -= 0.16

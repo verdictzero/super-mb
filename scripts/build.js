@@ -62,7 +62,7 @@ out('assets/tileset.json', json({
 }));
 
 const levels = EXAMPLES.map((e) => ({ id: e.id, level: e.build(ts) }));
-for (const [seed, flow, difficulty, theme] of [[7, 0.2, 0.4], [21, 0.5, 0.6], [1984, 0.85, 0.8], [303, 0.5, 0.6, 'factory']]) levels.push({ id: `generated-${seed}`, level: generateLevel(ts, { seed, flow, difficulty, theme }) });
+for (const [seed, flow, difficulty, theme, style] of [[7, 0.2, 0.4, 'meadow', 'classic'], [21, 0.5, 0.6, 'cavern', 'maze'], [1984, 0.85, 0.8, 'dusk', 'speedway'], [303, 0.5, 0.6, 'factory', 'classic'], [404, 0.5, 0.5, 'frost', 'dive'], [505, 0.4, 0.5, 'sky', 'climb'], [606, 0.4, 0.6, 'ruins', 'maze']]) levels.push({ id: `generated-${seed}`, level: generateLevel(ts, { seed, flow, difficulty, theme, style }) });
 for (const { id, level } of levels) {
   const test = playtest(ts, level);
   console.log(`${id}: ${level.width}x${level.height}, bot ${test.ok ? `finished in ${test.frames} frames` : `FAILED (${test.reason} at x=${test.x})`}`);
@@ -77,10 +77,10 @@ for (const { id, level } of levels) {
   for (const f of fs.readdirSync(path.join(root, 'assets'))) if (/\.(png|json)$/.test(f) && f !== 'tileset.tsj') out(`${G}/${f}`, fs.readFileSync(path.join(root, 'assets', f)));
   out(`${G}/themes.json`, json(Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, { label: t.label, sky: skyBands(k), colors: t.colors }]))));
   const index = [];
-  const more = [[11, 0.3, 0.4, 'meadow'], [12, 0.7, 0.6, 'cavern'], [13, 0.5, 0.7, 'dusk'], [14, 0.6, 0.6, 'factory']].map(([seed, flow, difficulty, theme]) => ({ id: `generated-${seed}`, level: generateLevel(ts, { seed, flow, difficulty, theme }) }));
+  const more = [];
   for (const { id, level } of [...levels, ...more]) {
     index.push({ id, name: level.name, theme: level.theme });
-    out(`${G}/levels/${id}.json`, json({ name: level.name, theme: level.theme, width: level.width, height: level.height, terrain: Array.from(level.terrain), decor: Array.from(level.decor), objects: level.objects, props: level.props || [], spawn: level.spawn }));
+    out(`${G}/levels/${id}.json`, json({ name: level.name, act: level.act || 1, physics: level.physics, theme: level.theme, width: level.width, height: level.height, terrain: Array.from(level.terrain), decor: Array.from(level.decor), objects: level.objects, props: level.props || [], spawn: level.spawn }));
   }
   out(`${G}/levels/index.json`, json(index));
 }

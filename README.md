@@ -26,7 +26,7 @@ lollipop trees, lit skylines, stepped pyramids). The three themes are Garden, Ne
 | `assets/shaders/*.frag` | The CRT television shader passes |
 | `assets/tileset.tsj` | Tiled tileset (names, kinds, loop path and angles as tile properties) |
 | `assets/tileset.json` | Engine metadata: per-tile pixel masks, surface angles, autotile table, prefab stamps |
-| `levels/*.tmj` | Four hand-made levels and four generated ones, in Tiled JSON |
+| `levels/*.tmj` | Four hand-made levels and seven generated ones (one per zone), in Tiled JSON |
 | `demo/index.html` | Self-contained playable demo: open it in a browser |
 | `src/tileset/` | Tileset generator |
 | `src/level/` | Level builder, example levels, generator, Tiled import/export |
@@ -73,6 +73,23 @@ moves slightly faster than the one above, which gives the receding-floor look of
 `backgrounds.json` lists each strip's position in the sheet, its vertical offset from the horizon,
 scroll factor(s) and drift, so another engine can reproduce the effect.
 
+## Zones, layouts and act flow
+
+**Zones** (themes): Garden, Neon, Sunset, Factory, and three more: **Frost** (icy palette, pines and
+snow-capped peaks; the ground is slippery, so you keep sliding and brake slowly), **Sky** (cloud
+banks at three depths, floating islands, balloons) and **Ruins** (desert sun, pyramids, stepped
+temples, a broken colonnade). A level can carry `physics: { frc, dec }` multipliers; Frost uses them.
+
+**Layouts** (`style` option, `STYLES` in `src/level/generator.js`) set a level's overall shape,
+independent of its zone: `classic` (mixed), `speedway` (mostly flow terrain and tall loops, few
+tiers), `climb` (starts at the bottom and every connector goes up), `dive` (starts at the top and
+keeps dropping) and `maze` (basements under every plateau and extra tiers).
+
+Generated levels get a zone name and an act number. Each act runs **title card -> play -> score
+tally**: a card with coloured bands and the zone name flies in and out before you can move, and at
+the goal the time bonus and gem bonus count into the total. Score comes from gems (10), enemies
+(100), bonus blocks (50) and bricks (10). Both screens are in the web demo and the Godot port.
+
 ## Player
 
 The player is a photo head riding upright inside a clear rolling sphere, a little under two tiles
@@ -98,7 +115,7 @@ physics and look. Open the folder in the Godot editor and press Play.
 | `godot/scripts/player_view.gd` | The head-in-a-sphere player with squash and stretch, drawn smooth at twice the art resolution |
 | `godot/scripts/main.gd` | Loading, input, the viewport chain for the CRT shader, HUD |
 | `godot/shaders/crt_*.gdshader` | The four CRT passes in Godot's shading language |
-| `godot/assets/` | Baked by `npm run build`: tile sheets, backdrops, set pieces, the head, all tables, and 12 levels as JSON |
+| `godot/assets/` | Baked by `npm run build`: tile sheets, backdrops, set pieces, the head, all tables, and 11 levels as JSON |
 
 Keys: arrows or A/D to run, Space/Up/Z to jump, R restart, N/P next/previous level, B bot auto-play,
 C CRT on/off, M mask type, G degauss.
@@ -111,7 +128,7 @@ Checked with Godot 4.3:
 
 - **Physics parity**: `godot/tests/parity.gd` and `scripts/parity.js` play every baked level with the
   bot and print the finishing frame, gems and final position. The two outputs are identical on all
-  12 levels.
+  11 levels.
 - **Rendering**: run under a virtual display with the OpenGL renderer, the level, backdrop, set
   pieces, player and all four CRT passes draw with no script or shader errors.
   `godot --path godot -- --shot=out.png --frames=200 --bot [--nocrt] [--level=3]` saves a frame.

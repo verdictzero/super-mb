@@ -5,7 +5,7 @@ import { TILE as T, S } from '../core/units.js';
 import { buildProps, PROP_SETS } from '../tileset/props.js';
 
 const GROUND = -1;
-const FLORA = { factory: ['barrel', 'barrel', 'cone', 'valve', 'rock'], meadow: ['flower_0', 'flower_1', 'tuft', 'tuft', 'mushroom', 'rock'], cavern: ['crystal', 'crystal', 'mushroom', 'rock'], dusk: ['tuft', 'rock', 'flower_1', 'tuft'] }; // placeholder, resolved to an autotile in finish()
+const FLORA = { frost: ['crystal', 'rock', 'tuft', 'crystal'], sky: ['flower_0', 'flower_1', 'tuft', 'tuft'], ruins: ['rock', 'rock', 'tuft', 'flower_1'], factory: ['barrel', 'barrel', 'cone', 'valve', 'rock'], meadow: ['flower_0', 'flower_1', 'tuft', 'tuft', 'mushroom', 'rock'], cavern: ['crystal', 'crystal', 'mushroom', 'rock'], dusk: ['tuft', 'rock', 'flower_1', 'tuft'] }; // placeholder, resolved to an autotile in finish()
 
 export class LevelBuilder {
   constructor(ts, { name = 'Untitled', theme = 'meadow', height = 30, ground = 22, ceiling = 0 } = {}) {

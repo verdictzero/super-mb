@@ -315,6 +315,9 @@ function basement(b, rng, o, d, entry, exit, g) {
   b.log.push({ piece: 'basement', x: xa - 4 });
 }
 
+// near the top or bottom of the level there is only one way to go; otherwise null
+const up0 = (g) => (g > BOTTOM - 14 ? true : g < TOP + 12 ? false : null);
+
 // A plateau: a stretch of the main route at roughly one height, with tiers stacked above it
 // and sometimes a basement below.
 function plateau(b, rng, o, d) {
@@ -330,16 +333,35 @@ function plateau(b, rng, o, d) {
   const x1 = b.x, gEnd = b.g;
   if (o.vertical > 0) {
     let lifts = pads.slice(0, -1);
-    if (pads.length >= 3 && rng.chance(0.3 + 0.5 * o.vertical) && basement(b, rng, o, d, pads[0], pads[pads.length - 1], g) !== false) lifts = pads.slice(1, -1);
+    if (pads.length >= 3 && rng.chance(o.basements ?? 0.3 + 0.5 * o.vertical) && basement(b, rng, o, d, pads[0], pads[pads.length - 1], g) !== false) lifts = pads.slice(1, -1);
     for (const p of lifts) if (rng.chance(0.5 + 0.5 * o.vertical)) tier(b, rng, o, d, p, x1 - 2, 0);
   }
   b.at(x1, gEnd); b.depth = SLAB; b.base = gEnd;
 }
 
+// Layout styles: the overall shape of a level, independent of its theme.
+//   dir: which way connectors go (1 up, -1 down, 0 either); start: starting ground row;
+//   flow / vertical: override or scale the sliders; loops, basements: how often those appear.
+export const STYLES = {
+  classic: { label: 'Classic', dir: 0, start: START },
+  speedway: { label: 'Speedway', dir: 0, start: START, flow: 0.95, vertical: 0.5, loops: 0.95, basements: 0.1 },
+  climb: { label: 'Climb', dir: 1, start: BOTTOM - 2, vertical: 1.1, loops: 0.3 },
+  dive: { label: 'Dive', dir: -1, start: TOP + 4, vertical: 1.1, loops: 0.6 },
+  maze: { label: 'Maze', dir: 0, start: START, flow: 0.25, vertical: 1.3, basements: 1, loops: 0.2 },
+};
+const ZONE_NAMES = {
+  meadow: ['Garden Grove', 'Bloom Bay', 'Petal Park'], cavern: ['Neon Night', 'Glow Grid', 'Volt Vista'], dusk: ['Sunset Shore', 'Ember Isle', 'Dusk Drive'],
+  factory: ['Chem Works', 'Piston Plant', 'Gear Gulch'], frost: ['Frost Field', 'Icicle Ridge', 'Glacier Glide'], sky: ['Cloud Canopy', 'Sky Stack', 'Halo Heights'], ruins: ['Sand Shrine', 'Relic Run', 'Dune Dial'],
+};
+const THEME_PHYSICS = { frost: { frc: 0.3, dec: 0.5 } }; // ice: you keep sliding and brake slowly
+
 function build(ts, seed, o) {
   const rng = makeRng(seed);
-  const theme = o.theme || rng.pick(['meadow', 'cavern', 'dusk', 'factory']);
-  const b = new LevelBuilder(ts, { name: `Seed ${o.seed}`, theme, height: HEIGHT, ground: START });
+  const theme = o.theme || rng.pick(Object.keys(ZONE_NAMES));
+  const styleName = o.style || rng.pick(['classic', 'classic', 'speedway', 'climb', 'dive', 'maze']), st = STYLES[styleName];
+  o = { ...o, flow: st.flow ?? o.flow, vertical: o.vertical * (st.vertical ?? 1), basements: st.basements, loops: st.loops };
+  const zone = rng.pick(ZONE_NAMES[theme]), act = 1 + (o.seed % 3);
+  const b = new LevelBuilder(ts, { name: zone, theme, height: HEIGHT, ground: st.start });
   b.log = []; b.depth = SLAB;
   b.flat(9);
   for (let sector = 0; b.x < o.length - 30; sector++) {
@@ -349,25 +371,27 @@ function build(ts, seed, o) {
     // connector: change height by a lot, steering away from the top and bottom of the level
     b.gMin = TOP; b.gMax = BOTTOM; b.depth = SLAB;
     b.checkpoint(1).flat(3);
-    const up = b.g > 74 ? true : b.g < 44 ? false : rng.chance(0.5);
+    const room = up0(b.g), up = room !== null ? room : st.dir !== 0 ? st.dir > 0 : rng.chance(0.5);
     const table = up ? ASCENT : DESCENT, moves = 1 + (rng.chance(o.vertical) ? 1 : 0);
     for (let i = 0, guard = 0; i < moves && guard < 8; guard++) {
       const name = rng.pick(Object.keys(table)), x0 = b.x;
       if (table[name](b, rng, d) === false) continue;
       b.log.push({ piece: name, x: x0 }); i++;
     }
-    if (rng.chance(0.35 + 0.4 * o.vertical)) { const x0 = b.x; if (tallLoop(b, rng) !== false) b.log.push({ piece: 'tallLoop', x: x0 }); }
+    if (rng.chance(o.loops ?? 0.35 + 0.4 * o.vertical)) { const x0 = b.x; if (tallLoop(b, rng) !== false) b.log.push({ piece: 'tallLoop', x: x0 }); }
   }
   b.depth = SLAB;
   b.flat(3).stairs(rng.int(3, 4), 1).flat(1).goal();
   b.decorate(rng);
   const level = b.finish();
-  level.meta = { pieces: b.log };
+  level.meta = { pieces: b.log, style: styleName, zone, act };
+  level.act = act; level.style = styleName;
+  if (THEME_PHYSICS[theme]) level.physics = THEME_PHYSICS[theme];
   return level;
 }
 
 export function generateLevel(ts, opts = {}) {
-  const o = { seed: 1, length: 360, difficulty: 0.5, flow: 0.5, vertical: 0.7, theme: null, validate: true, attempts: 8, ...opts };
+  const o = { seed: 1, length: 360, difficulty: 0.5, flow: 0.5, vertical: 0.7, theme: null, style: null, validate: true, attempts: 8, ...opts };
   let level, test = null;
   for (let attempt = 0; attempt < o.attempts; attempt++) {
     level = build(ts, (o.seed * 2654435761 + attempt * 97) >>> 0, o);

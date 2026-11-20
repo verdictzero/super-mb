@@ -68,7 +68,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
     <div class="screen">
       <canvas id="crt" tabindex="0" aria-label="Game screen, CRT filter"></canvas>
       <canvas id="game" width="2400" height="1350" tabindex="0" aria-label="Game screen" hidden></canvas>
-      <div class="hud"><span id="hudName"></span><span>gems <b id="hudGems">0</b></span><span>speed <b id="hudSpeed">0.0</b></span><span>angle <b id="hudAngle">0</b>°</span><span>path <b id="hudPath">A</b></span><span id="hudState"></span></div>
+      <div class="hud"><span id="hudName"></span><span>score <b id="hudScore">0</b></span><span>time <b id="hudTime">0:00</b></span><span>gems <b id="hudGems">0</b></span><span>speed <b id="hudSpeed">0.0</b></span><span>angle <b id="hudAngle">0</b>°</span><span>path <b id="hudPath">A</b></span><span id="hudState"></span></div>
       <div class="mini"><canvas id="mini"></canvas><div id="miniMark"></div></div>
     </div>
     <div class="pad" aria-label="Touch controls">
@@ -99,7 +99,8 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
     <div class="panel">
       <div class="fields">
         <label for="seed">Seed<input id="seed" type="number" min="1" max="999999" value="1984"></label>
-        <label for="theme">Theme<select id="theme"><option value="">From seed</option><option value="meadow">Garden</option><option value="cavern">Neon</option><option value="dusk">Sunset</option><option value="factory">Factory</option></select></label>
+        <label for="theme">Theme<select id="theme"><option value="">From seed</option><option value="meadow">Garden</option><option value="cavern">Neon</option><option value="dusk">Sunset</option><option value="factory">Factory</option><option value="frost">Frost</option><option value="sky">Sky</option><option value="ruins">Ruins</option></select></label>
+        <label for="style">Layout<select id="style"><option value="">From seed</option><option value="classic">Classic</option><option value="speedway">Speedway</option><option value="climb">Climb</option><option value="dive">Dive</option><option value="maze">Maze</option></select></label>
         <label for="flow"><span>Flow (speed terrain) <output id="flowOut">0.6</output></span><input id="flow" type="range" min="0" max="1" step="0.05" value="0.6"></label>
         <label for="diff"><span>Difficulty <output id="diffOut">0.5</output></span><input id="diff" type="range" min="0" max="1" step="0.05" value="0.5"></label>
         <label for="vert"><span>Verticality <output id="vertOut">0.7</output></span><input id="vert" type="range" min="0" max="1" step="0.05" value="0.7"></label>
@@ -121,7 +122,7 @@ kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width
   <section aria-label="Tileset">
     <h2>Tileset</h2>
     <div class="row">
-      <button id="th-meadow" aria-pressed="true">Garden</button><button id="th-cavern" aria-pressed="false">Neon</button><button id="th-dusk" aria-pressed="false">Sunset</button><button id="th-factory" aria-pressed="false">Factory</button>
+      <button id="th-meadow" aria-pressed="true">Garden</button><button id="th-cavern" aria-pressed="false">Neon</button><button id="th-dusk" aria-pressed="false">Sunset</button><button id="th-factory" aria-pressed="false">Factory</button><button id="th-frost" aria-pressed="false">Frost</button><button id="th-sky" aria-pressed="false">Sky</button><button id="th-ruins" aria-pressed="false">Ruins</button>
     </div>
     <div class="sheet"><canvas id="sheet"></canvas></div>
     <div class="note" id="tileInfo">Point at a tile to see its name, kind and surface angles. Turn on Show collision to see the solid pixels.</div>

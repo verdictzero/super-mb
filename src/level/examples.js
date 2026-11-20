@@ -80,9 +80,12 @@ function chemWorks(ts) {
   return b.decorate(makeRng(44)).finish();
 }
 
+// hand-made levels are Act 1 of their zones
+const act1 = (build) => (ts) => Object.assign(build(ts), { act: 1 });
+
 export const EXAMPLES = [
-  { id: 'meadow-run', build: meadowRun },
-  { id: 'cavern-coil', build: cavernCoil },
-  { id: 'dusk-speedway', build: duskSpeedway },
-  { id: 'chem-works', build: chemWorks },
+  { id: 'meadow-run', build: act1(meadowRun) },
+  { id: 'cavern-coil', build: act1(cavernCoil) },
+  { id: 'dusk-speedway', build: act1(duskSpeedway) },
+  { id: 'chem-works', build: act1(chemWorks) },
 ];

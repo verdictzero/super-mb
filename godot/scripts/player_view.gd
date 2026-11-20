@@ -17,8 +17,8 @@ func _draw() -> void:
 	if main == null or main.sim == null:
 		return
 	var p: Dictionary = main.sim.p
-	if p.dead:
-		return
+	if p.dead or (main.phase == "intro" and main.phase_t < main.INTRO_HOLD + 8):
+		return # hidden behind the title card
 	var m: Dictionary = main.morph
 	var cam: Vector2 = main.world.cam.round()
 	var R := Sim.R * 1.12

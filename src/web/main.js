@@ -60,7 +60,7 @@ const overlay = (() => {
   return canvasFrom(atlasIdx.w, atlasIdx.h, rgba);
 })();
 
-const state = { level: null, sim: null, bot: new Bot(), useBot: true, showCol: false, sheetTheme: 'meadow', cam: { x: 0, y: 0 }, wait: 0, idle: 0, keys: {} };
+const state = { level: null, sim: null, bot: new Bot(), useBot: true, showCol: false, sheetTheme: 'meadow', cam: { x: 0, y: 0 }, wait: 0, idle: 0, keys: {}, phase: 'intro', phaseT: 0, score: 0, time: 0, tally: null };
 const game = $('game'), g = game.getContext('2d');
 // The canvas is K times the logical view: pixel art is scaled up crisply, while the player's
 // photo and sphere are drawn smooth at the full resolution.
@@ -70,9 +70,10 @@ const headImg = new Image(); headImg.src = HEAD;
 
 function load(level) {
   state.level = level; state.sim = new Sim(ts, level); state.bot = new Bot(); state.wait = 0; parts.length = 0; trail.length = 0;
+  startAct();
   const p = state.sim.p;
   state.cam.x = p.x - VW / 2; state.cam.y = p.y - VH * 0.6;
-  $('hudName').textContent = level.name;
+  $('hudName').textContent = `${level.name} Zone, Act ${level.act || 1}`;
   const im = renderLevel(ts, level, level.theme, level.height > 40 ? 4 : 2), mini = $('mini');
   mini.width = im.w; mini.height = im.h;
   mini.getContext('2d').putImageData(new ImageData(im.rgba, im.w, im.h), 0, 0);
@@ -108,6 +109,7 @@ function effects(sim, level) {
   updateMorph(sim);
   const c = THEMES[level.theme].colors, u = T / 16;
   for (const e of sim.events) {
+    state.score += { gem: 10, bop: 100, bonus: 50, brick: 10 }[e.type] || 0;
     if (e.type === 'gem') burst(e.x, e.y, 6, c.gemL, 2.2 * u, { life: 18 });
     else if (e.type === 'brick') burst(e.x, e.y, 8, c.brick, 4 * u, { up: true, g: 0.35 * u, life: 40, size: T / 5 });
     else if (e.type === 'bonus') parts.push({ x: e.x, y: e.y - T, vx: 0, vy: -3 * u, g: 0.2 * u, life: 26, max: 26, gem: true });
@@ -211,11 +213,11 @@ function draw() {
     if (tx < 0 || ty < 0 || tx >= level.width || ty >= level.height) continue;
     drawTile(overlay, sim.terrain[ty * level.width + tx], tx * T - cx, ty * T - cy);
   }
-  if (p.won || p.dead) {
-    g.fillStyle = 'rgba(27,22,48,.55)'; g.fillRect(0, VH / 2 - T, VW, 2 * T);
-    g.fillStyle = '#fff'; g.font = `700 ${T}px "Pixelify Sans", sans-serif`; g.textAlign = 'center';
-    g.fillText(p.won ? 'Goal!' : 'Try again', VW / 2, VH / 2 + T / 3);
-  }
+  if (p.dead) { g.fillStyle = 'rgba(27,22,48,.55)'; g.fillRect(0, VH / 2 - T, VW, 2 * T); label('TRY AGAIN', VW / 2, VH / 2 + 12, 34, '#fff', 'center'); }
+  if (state.phase === 'intro') drawTitleCard(state.phaseT, state.level);
+  if (state.phase === 'tally') drawTally(state.phaseT, state.level);
+  $('hudScore').textContent = state.score;
+  $('hudTime').textContent = `${Math.floor(state.time / 3600)}:${String(Math.floor(state.time / 60) % 60).padStart(2, '0')}`;
   $('hudGems').textContent = p.gems;
   $('hudSpeed').textContent = (Math.abs(p.grounded ? p.gsp : Math.hypot(p.xsp, p.ysp)) * (16 / T)).toFixed(1);
   $('hudAngle').textContent = Math.round(p.ang);
@@ -224,10 +226,66 @@ function draw() {
   $('miniMark').style.left = `${(p.x / (level.width * T)) * 100}%`; $('miniMark').style.top = `${(p.y / (level.height * T)) * 100}%`;
 }
 
+// ---- act flow: title card -> play -> score tally -----------------------------------
+const INTRO = { in: 26, hold: 112, out: 142 }; // frames: bands and text slide in, hold, slide away
+function startAct() { Object.assign(state, { phase: 'intro', phaseT: 0, score: 0, time: 0, tally: null }); }
+// bonus for finishing quickly, by seconds taken
+const timeBonus = (frames) => { const s = frames / 60; for (const [limit, pts] of [[30, 50000], [45, 10000], [60, 5000], [90, 4000], [120, 3000], [180, 2000], [240, 1000], [300, 500]]) if (s < limit) return pts; return 0; };
+const ease = (t) => { t = Math.max(0, Math.min(1, t)); return 1 - (1 - t) ** 3; };
+function label(text, x, y, size, color, align = 'left') { // heavy italic caps with a hard drop shadow
+  g.font = `italic 700 ${size}px "Pixelify Sans", "Trebuchet MS", sans-serif`; g.textAlign = align; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#140a2e'; g.fillText(text, x + size * 0.07, y + size * 0.07);
+  g.fillStyle = color; g.fillText(text, x, y);
+}
+function saw(x0, y0, x1, y1, tooth, nx, ny) { // band edge cut into teeth, pointing along (nx, ny)
+  const n = Math.round(Math.hypot(x1 - x0, y1 - y0) / tooth);
+  for (let i = 0; i < n; i++) { const ax = x0 + ((x1 - x0) * i) / n, ay = y0 + ((y1 - y0) * i) / n, bx = x0 + ((x1 - x0) * (i + 1)) / n, by = y0 + ((y1 - y0) * (i + 1)) / n; g.beginPath(); g.moveTo(ax, ay); g.lineTo((ax + bx) / 2 + nx * tooth * 0.6, (ay + by) / 2 + ny * tooth * 0.6); g.lineTo(bx, by); g.fill(); }
+}
+// Title card: a blue field drops in, a red band slides down the left, a yellow band slides in
+// along the bottom, and the zone name, "ZONE" and the act number fly in; then it all leaves.
+function drawTitleCard(t, level) {
+  const a = ease(t / INTRO.in), o = ease((t - INTRO.hold) / (INTRO.out - INTRO.hold)), k = a * (1 - o); // k: 0 off-screen, 1 in place
+  g.fillStyle = '#1c2cd0'; g.fillRect(0, -VH * o, VW, VH * (t < INTRO.hold ? a : 1));
+  const bx = -230 * (1 - k); g.fillStyle = '#e4203a'; g.fillRect(bx, 0, 200, VH); saw(bx + 200, 0, bx + 200, VH, 30, 1, 0);
+  const yx = VW * (1 - k); g.fillStyle = '#ffd21e'; g.fillRect(yx, 330, VW, 120); saw(yx, 330, yx + VW, 330, 30, 0, -1);
+  label('SUPER MB', bx + 22, 44, 22, '#fff');
+  const tx = VW - 30 + 700 * (1 - ease((t - 6) / INTRO.in) * (1 - o));
+  label(level.name.toUpperCase(), tx, 196, 60, '#fff', 'right');
+  label('ZONE', VW - 30 + 700 * (1 - ease((t - 14) / INTRO.in) * (1 - o)), 258, 46, '#fff', 'right');
+  const ay = 392 + 200 * (1 - ease((t - 20) / INTRO.in) * (1 - o));
+  g.fillStyle = '#140a2e'; g.beginPath(); g.arc(404, ay + 4, 50, 0, 2 * Math.PI); g.fill();
+  g.fillStyle = '#e4203a'; g.beginPath(); g.arc(400, ay, 50, 0, 2 * Math.PI); g.fill();
+  label('ACT', 400, ay - 14, 20, '#ffd21e', 'center'); label(String(level.act || 1), 400, ay + 34, 50, '#fff', 'center');
+}
+// Score tally: heading and rows slide in, then the bonuses drain into the total.
+function drawTally(t, level) {
+  const y = state.tally, row = (i) => ease((t - 30 - i * 10) / 22);
+  const hx = (1 - ease(t / 24)) * VW;
+  g.fillStyle = `rgba(20,10,46,${0.5 * ease(t / 24)})`; g.fillRect(0, 70, VW, 300); // dim the scene behind the figures
+  label('YOU', VW / 2 - 150 - hx, 118, 40, '#ffd21e', 'center'); label('GOT THROUGH', VW / 2 + 60 + hx, 118, 40, '#fff', 'center');
+  label(`${level.name.toUpperCase()} ZONE  ACT ${level.act || 1}`, VW / 2 - hx, 164, 30, '#fff', 'center');
+  [['TIME BONUS', y.time], ['GEM BONUS', y.gems], ['TOTAL', y.total]].forEach(([name, v], i) => {
+    const yy = 240 + i * 50 + (i === 2 ? 16 : 0), dx = (1 - row(i)) * VW;
+    label(name, 210 - dx, yy, 30, '#ffd21e'); label(String(v), 600 + dx, yy, 30, '#fff', 'right');
+  });
+}
 function tick() {
-  const { sim, keys } = state;
-  state.idle += sim.p.dead || sim.p.won ? 1 : 0; // keep clouds drifting while the sim is paused
-  if (sim.p.dead || sim.p.won) { if (++state.wait > (sim.p.won ? 150 : 60)) { sim.reset(!sim.p.won); state.bot = new Bot(); state.wait = 0; trail.length = 0; } effects(sim, state.level); return; }
+  const { sim, keys } = state, p = sim.p;
+  if (state.phase === 'intro') { state.idle++; if (++state.phaseT >= INTRO.out) state.phase = 'play'; return; }
+  if (p.won) { // tally: wait, count the bonuses into the total, hold, then start the act again
+    state.idle++;
+    if (state.phase !== 'tally') { state.phase = 'tally'; state.phaseT = 0; state.tally = { time: timeBonus(state.time), gems: p.gems * 100, total: state.score, done: 0 }; }
+    const y = state.tally;
+    if (++state.phaseT > 110) {
+      const take = (key) => { const n = Math.min(y[key], 100); y[key] -= n; y.total += n; state.score = y.total; return n; };
+      if (!take('time') && !take('gems') && !y.done) y.done = state.phaseT;
+      if (y.done && state.phaseT > y.done + 170) { sim.reset(false); state.bot = new Bot(); trail.length = 0; startAct(); }
+    }
+    effects(sim, state.level);
+    return;
+  }
+  if (p.dead) { state.idle++; if (++state.wait > 60) { sim.reset(true); state.bot = new Bot(); state.wait = 0; trail.length = 0; } effects(sim, state.level); return; }
+  state.time++;
   sim.step(state.useBot ? state.bot.input(sim) : { left: keys.left, right: keys.right, jump: keys.jump });
   effects(sim, state.level);
 }
@@ -276,7 +334,7 @@ for (const [id, k] of [['padL', 'left'], ['padR', 'right'], ['padJ', 'jump']]) {
 }
 $('botBtn').onclick = () => setBot(!state.useBot);
 $('colBtn').onclick = () => { state.showCol = !state.showCol; $('colBtn').setAttribute('aria-pressed', state.showCol); drawSheet(); };
-$('restart').onclick = () => { state.sim.reset(); state.bot = new Bot(); };
+$('restart').onclick = () => { state.sim.reset(); state.bot = new Bot(); startAct(); };
 EXAMPLES.forEach((e, i) => { $(`lv${i}`).onclick = () => { load(e.build(ts)); showPieces(null); (state.crtOn ? $('crt') : game).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }; });
 
 // ---- generator ------------------------------------------------------------------
@@ -287,10 +345,10 @@ function showPieces(level) {
   if (!level) { $('genNote').textContent = 'Hand-made level loaded. Generate to see the piece list for a seed.'; return; }
   for (const p of [...level.meta.pieces].sort((a, b) => a.x - b.x)) { const s = document.createElement('span'); s.className = `chip ${TALL_PIECES.has(p.piece) ? 'tall' : FLOW_PIECES.has(p.piece) ? 'flow' : 'block'}`; s.textContent = p.piece; s.title = `starts at tile ${p.x}`; chips.append(s); }
   const m = level.meta;
-  $('genNote').textContent = `${level.width} by ${level.height} tiles, ${m.pieces.length} pieces, ${THEMES[level.theme].label} theme. ` + (m.validated ? `Bot reached the goal by the high route and the low route${m.attempt ? ` (attempt ${m.attempt + 1})` : ''}.` : 'Bot could not finish this one.');
+  $('genNote').textContent = `${level.name} Zone, ${m.style} layout: ${level.width} by ${level.height} tiles, ${m.pieces.length} pieces, ${THEMES[level.theme].label} theme. ` + (m.validated ? `Bot reached the goal by the high route and the low route${m.attempt ? ` (attempt ${m.attempt + 1})` : ''}.` : 'Bot could not finish this one.');
 }
 function generate() {
-  const level = generateLevel(ts, { seed: Math.max(1, +$('seed').value || 1), flow: +$('flow').value, difficulty: +$('diff').value, length: +$('len').value, vertical: +$('vert').value, theme: $('theme').value || null });
+  const level = generateLevel(ts, { seed: Math.max(1, +$('seed').value || 1), flow: +$('flow').value, difficulty: +$('diff').value, length: +$('len').value, vertical: +$('vert').value, theme: $('theme').value || null, style: $('style').value || null });
   load(level); showPieces(level);
 }
 $('gen').onclick = () => { generate(); (state.crtOn ? $('crt') : game).scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };

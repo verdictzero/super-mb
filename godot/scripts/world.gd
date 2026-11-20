@@ -145,6 +145,85 @@ func _draw() -> void:
 			draw_rect(Rect2(roundf(q.x - q.size / 2.0) - cx, roundf(q.y - q.size / 2.0) - cy, q.size, q.size), c)
 
 
+	if p.dead:
+		draw_rect(Rect2(0, view.y / 2.0 - TILE, view.x, 2 * TILE), Color(0.1, 0.09, 0.19, 0.55))
+		_label("TRY AGAIN", view.x / 2.0, view.y / 2.0 + 12, 34, Color.WHITE, 1)
+	if main.phase == "intro":
+		_title_card(main.phase_t, level)
+	elif main.phase == "tally":
+		_tally(main.phase_t, level)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+static func _ease(t: float) -> float:
+	t = clampf(t, 0.0, 1.0)
+	return 1.0 - pow(1.0 - t, 3.0)
+
+
+## heavy slanted caps with a hard drop shadow; align 0 left, 1 centre, 2 right
+func _label(text: String, x: float, y: float, size: int, color: Color, align: int = 0) -> void:
+	var font := ThemeDB.fallback_font
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var off := Vector2(-w * 0.5 * align, 0)
+	for pass_no in 2:
+		var d := size * 0.07 if pass_no == 0 else 0.0
+		draw_set_transform_matrix(Transform2D(Vector2(1, 0), Vector2(-0.22, 1), Vector2(x + d, y + d)))
+		draw_string(font, off, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(0.08, 0.04, 0.18) if pass_no == 0 else color)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## band edge cut into teeth pointing along n
+func _saw(a: Vector2, b: Vector2, tooth: float, n: Vector2, color: Color) -> void:
+	var count := int(round(a.distance_to(b) / tooth))
+	for i in count:
+		var p0 := a.lerp(b, float(i) / count)
+		var p1 := a.lerp(b, float(i + 1) / count)
+		draw_colored_polygon(PackedVector2Array([p0, (p0 + p1) / 2.0 + n * tooth * 0.6, p1]), color)
+
+
+## Title card: a blue field drops in, a red band slides down the left, a yellow band slides in
+## along the bottom, and the zone name, "ZONE" and the act number fly in; then it all leaves.
+func _title_card(t: int, lvl: Dictionary) -> void:
+	var a := _ease(t / float(main.INTRO_IN))
+	var o := _ease((t - main.INTRO_HOLD) / float(main.INTRO_OUT - main.INTRO_HOLD))
+	var k := a * (1.0 - o)
+	var red := Color.html("#e4203a")
+	var yellow := Color.html("#ffd21e")
+	draw_rect(Rect2(0, -view.y * o, view.x, view.y * (a if t < main.INTRO_HOLD else 1.0)), Color.html("#1c2cd0"))
+	var bx := -230.0 * (1.0 - k)
+	draw_rect(Rect2(bx, 0, 200, view.y), red)
+	_saw(Vector2(bx + 200, 0), Vector2(bx + 200, view.y), 30, Vector2(1, 0), red)
+	var yx := view.x * (1.0 - k)
+	draw_rect(Rect2(yx, 330, view.x, 120), yellow)
+	_saw(Vector2(yx, 330), Vector2(yx + view.x, 330), 30, Vector2(0, -1), yellow)
+	_label("SUPER MB", bx + 22, 96, 22, Color.WHITE)
+	var zone := String(lvl.get("name", "")).to_upper()
+	_label(zone, view.x - 30 + 700.0 * (1.0 - _ease((t - 6) / float(main.INTRO_IN)) * (1.0 - o)), 196, 60, Color.WHITE, 2)
+	_label("ZONE", view.x - 30 + 700.0 * (1.0 - _ease((t - 14) / float(main.INTRO_IN)) * (1.0 - o)), 258, 46, Color.WHITE, 2)
+	var ay := 392.0 + 200.0 * (1.0 - _ease((t - 20) / float(main.INTRO_IN)) * (1.0 - o))
+	draw_circle(Vector2(404, ay + 4), 50, Color(0.08, 0.04, 0.18))
+	draw_circle(Vector2(400, ay), 50, red)
+	_label("ACT", 400, ay - 14, 20, yellow, 1)
+	_label(str(int(lvl.get("act", 1))), 400, ay + 34, 50, Color.WHITE, 1)
+
+
+## Score tally: heading and rows slide in, then the bonuses drain into the total.
+func _tally(t: int, lvl: Dictionary) -> void:
+	var y: Dictionary = main.tally
+	var yellow := Color.html("#ffd21e")
+	var hx := (1.0 - _ease(t / 24.0)) * view.x
+	draw_rect(Rect2(0, 70, view.x, 300), Color(0.08, 0.04, 0.18, 0.5 * _ease(t / 24.0)))
+	_label("YOU", view.x / 2.0 - 150 - hx, 118, 40, yellow, 1)
+	_label("GOT THROUGH", view.x / 2.0 + 60 + hx, 118, 40, Color.WHITE, 1)
+	_label("%s ZONE  ACT %d" % [String(lvl.get("name", "")).to_upper(), int(lvl.get("act", 1))], view.x / 2.0 - hx, 164, 30, Color.WHITE, 1)
+	var rows := [["TIME BONUS", y.time], ["GEM BONUS", y.gems], ["TOTAL", y.total]]
+	for i in rows.size():
+		var yy := 240.0 + i * 50 + (16 if i == 2 else 0)
+		var dx := (1.0 - _ease((t - 30 - i * 10) / 22.0)) * view.x
+		_label(rows[i][0], 210 - dx, yy, 30, yellow)
+		_label(str(int(rows[i][1])), 600 + dx, yy, 30, Color.WHITE, 2)
+
+
 ## one horizontal strip of a parallax layer, tiled across the view
 func _strip(tex: Texture2D, l: Dictionary, src_y: float, rows: float, dest_y: float, off: float, lw_px: float) -> void:
 	if dest_y >= view.y or dest_y + rows <= 0.0:
