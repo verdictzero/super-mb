@@ -39,12 +39,18 @@ for (const theme of Object.keys(THEMES)) {
 }
 out('assets/backgrounds.json', JSON.stringify(bgMeta, null, 1));
 // big set pieces: one sheet per theme, laid out left to right
-const props = Object.values(buildProps()), propSheet = new Img(props.reduce((n, p) => n + (p.w + 4) * p.frames.length, 0), Math.max(...props.map((p) => p.h))), propMeta = {};
-let px = 0;
-for (const p of props) { // animated props have their frames side by side
-  propMeta[p.name] = { x: px, y: propSheet.h - p.h, w: p.w, h: p.h, frames: p.frames.length, frameStep: p.w + 4, sky: p.sky, sink: p.sink };
-  for (const f of p.frames) { propSheet.blit(f, px, propSheet.h - p.h); px += p.w + 4; }
+// Packed in rows no wider than 4096px (a safe texture size everywhere, including browsers);
+// an animated prop's frames sit side by side in one row.
+const props = Object.values(buildProps()), propMeta = {}, MAX_W = 4096;
+let px = 0, py = 0, rowH = 0, sheetW = 0;
+for (const p of props) {
+  const need = (p.w + 4) * p.frames.length;
+  if (px + need > MAX_W) { px = 0; py += rowH + 4; rowH = 0; }
+  propMeta[p.name] = { x: px, y: py, w: p.w, h: p.h, frames: p.frames.length, frameStep: p.w + 4, sky: p.sky, sink: p.sink };
+  px += need; rowH = Math.max(rowH, p.h); sheetW = Math.max(sheetW, px);
 }
+const propSheet = new Img(sheetW, py + rowH);
+for (const p of props) p.frames.forEach((f, i) => propSheet.blit(f, propMeta[p.name].x + i * (p.w + 4), propMeta[p.name].y));
 for (const theme of Object.keys(THEMES)) {
   out(`assets/props-${theme}.png`, encodePNG(propSheet.w, propSheet.h, toRGBA(propSheet, theme)));
   const rgba = toRGBA(propSheet, theme), sky = THEMES[theme].sky[1];

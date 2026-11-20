@@ -73,6 +73,18 @@ moves slightly faster than the one above, which gives the receding-floor look of
 `backgrounds.json` lists each strip's position in the sheet, its vertical offset from the horizon,
 scroll factor(s) and drift, so another engine can reproduce the effect.
 
+### Release builds
+
+`GODOT=/path/to/godot scripts/godot-export.sh` exports the presets in `godot/export_presets.cfg`
+(Linux, Windows, macOS, Web) and zips each into `release/` as `super-mb-<version>-<platform>.zip`.
+It needs the export templates matching your Godot version. The version comes from
+`config/version` in `godot/project.godot`.
+
+- **Linux**: one executable with the game data embedded.
+- **Windows**: one `.exe` with the game data embedded. Not code-signed.
+- **macOS**: universal app, ad-hoc signed only, so Gatekeeper will ask before first launch.
+- **Web**: static files; serve the folder over HTTP (opening `index.html` from disk does not work).
+
 ## Zones, layouts and act flow
 
 **Zones** (themes): Garden, Neon, Sunset, Factory, and three more: **Frost** (icy palette, pines and
